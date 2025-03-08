@@ -30,12 +30,14 @@ void Game::HandleEvents() {
 			isRunning = false;
 			break;
 		case SDL_EVENT_KEY_DOWN:
-			if (event.key.key == SDLK_RIGHT) board->moveRight();
-			if (event.key.key == SDLK_LEFT) board->moveLeft();
-			if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */ ) board->Rotate();
-			if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */ ) board->ReversedRotate();
-			if (event.key.key == SDLK_SPACE) board->HardDrop();
-			if (event.key.key == SDLK_DOWN) board->SoftDrop();
+			if (board->isGameGoing()) {
+				if (event.key.key == SDLK_RIGHT) board->moveRight();
+				if (event.key.key == SDLK_LEFT) board->moveLeft();
+				if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */) board->Rotate();
+				if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */) board->ReversedRotate();
+				if (event.key.key == SDLK_SPACE) board->HardDrop();
+				if (event.key.key == SDLK_DOWN) board->SoftDrop();
+			}
 
 			break;
 		default:

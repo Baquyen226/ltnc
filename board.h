@@ -18,7 +18,6 @@ public:
 	void printBoard();
 	void getRenderColor(SDL_Renderer* renderer, int piece_id);
 	void Render(SDL_Renderer* renderer);
-	void clearNLines(int start, int end, int rows);
 	void editCell(int i, int j, int val);
 	bool canMove(int x, int y, int r);
 	void moveRight();
@@ -32,6 +31,7 @@ public:
 	int  checkForLineClear();
 	void boardUpdate();
 	void GameOver();
+	bool isGameGoing();
 private:
 	int pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 	int fTimer;

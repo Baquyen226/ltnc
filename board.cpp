@@ -3,6 +3,25 @@
 
 #include <SDL3/SDL.h>
 
+//lazy fix
+struct PreviousPieceState {
+    int id, x, y, rotation;
+
+    PreviousPieceState() {
+        id = 0;
+        x = 0;
+        y = 0;
+        rotation = 0;
+    }
+
+    void save(int _id, int _x, int _y, int _rotation) {
+		id = _id;
+        x = _x;
+        y = _y;
+        rotation = _rotation;
+    }
+};
+
 Board::Board() {
     queue = new Queue();
     currentPiece = new Tetromino();
@@ -11,6 +30,8 @@ Board::Board() {
     currentPiece->generateNewPiece(queue);
 	clearBoard();
 }
+
+PreviousPieceState lastPieceState;
 
 int** Board::getPlayingField() {
 	return reinterpret_cast<int**>(pBoard);
@@ -101,9 +122,6 @@ void Board::Render(SDL_Renderer* renderer) {
 }
 
 
-void Board::clearNLines(int start, int end, int rows) {
-}
-
 void Board::editCell(int i, int j, int val) {
     pBoard[i][j] = val;
 }
@@ -111,29 +129,30 @@ void Board::editCell(int i, int j, int val) {
 bool Board::canMove(int newX, int newY, int newRotation) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {  // If this part of the piece is occupied
-                int boardX = newX + j;
-                int boardY = newY + i;
+            if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {
+                int boardX = newX + j;  // Calculate the board X coordinate
+                int boardY = newY + i;  // Calculate the board Y coordinate
 
                 // Check if the piece is out of bounds
                 if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
-                    //std::cout << "Couldnt move/rotate because out of bound";
-                    return false;  // Block would go outside the board
+                    std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
+                    return false;  // Out of bounds, the move is invalid
                 }
 
-                // Check if the cell is already occupied
-                if (pBoard[boardY][boardX] != 0) {
-                    //std::cout << "Couldnt move/rotate because of collision";
-                    return false;  // Block collides with an existing piece
+                // Check if the cell is already occupied (collision)
+                if (boardY >= 0 && pBoard[boardY][boardX] != 0) {
+                    std::cout << "Collision at (" << boardX << ", " << boardY << ")\n";
+                    return false;  // The spot is occupied, can't move
                 }
             }
         }
     }
-    return true;
+    return true;  // If no collisions, return true (valid move)
 }
 
 
 void Board::moveRight() {
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     int newX = currentPiece->x + 1;
     deleteOldBlock();
     if (!Board::canMove(newX, currentPiece->y, currentPiece->rotation)) return;
@@ -141,6 +160,7 @@ void Board::moveRight() {
 }
 
 void Board::moveLeft() {
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     int newX = currentPiece->x - 1;
     deleteOldBlock();
     if (!Board::canMove(newX, currentPiece->y, currentPiece->rotation)) return;
@@ -148,23 +168,26 @@ void Board::moveLeft() {
 }
 
 void Board::Rotate() {
-    int newRotate = (currentPiece->x + 5) % 4;
-    deleteOldBlock();
-    if (!Board::canMove(currentPiece->x, currentPiece->y, newRotate)) return;
-    currentPiece->rotate(1);
-}
-
-void Board::ReversedRotate() {
-    int newRotate = (currentPiece->x + 3) % 4;
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+    int newRotate = (currentPiece->rotation + 3) % 4;
     deleteOldBlock();
     if (!Board::canMove(currentPiece->x, currentPiece->y, newRotate)) return;
     currentPiece->rotate(-1);
+}
+
+void Board::ReversedRotate() {
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+    int newRotate = (currentPiece->rotation + 5) % 4;
+    deleteOldBlock();
+    if (!Board::canMove(currentPiece->x, currentPiece->y, newRotate)) return;
+    currentPiece->rotate(1);
 }
 
 void Board::HardDrop() {
     int x = currentPiece->x;
     int y = currentPiece->y;
     int rotation = currentPiece->rotation;
+    lastPieceState.save(currentPiece->pieceID, x, y, rotation);
     deleteOldBlock();
     while(canMove(x,y+1,rotation)){
         y++;
@@ -175,6 +198,7 @@ void Board::HardDrop() {
 }
 
 void Board::SoftDrop() {
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     int x = currentPiece->x;
     int y = currentPiece->y;
     int rotation = currentPiece->rotation;
@@ -186,11 +210,16 @@ void Board::SoftDrop() {
 void Board::deleteOldBlock() {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            int id = currentPiece->pieceID;
-            int boardX = currentPiece->x + j;
-            int boardY = currentPiece->y + i;
+            int id          = lastPieceState.id;
+            int boardX      = lastPieceState.x + j;
+            int boardY      = lastPieceState.y + i;
+            int rotation    = lastPieceState.rotation;
+            
+            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
+                continue; // Skip invalid positions
+            }
 
-            if (Piece_Shape[id][currentPiece->rotation][i][j] != 0) {
+            if (Piece_Shape[id][rotation][i][j] != 0) {
                 pBoard[boardY][boardX] = 0;
             }
         }
@@ -198,6 +227,11 @@ void Board::deleteOldBlock() {
 }
 
 void Board::putBlockInPlace() {
+    if (!currentPiece) {
+        std::cerr << "Error: currentPiece is nullptr!" << std::endl;
+        return;
+    }
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             int id = currentPiece->pieceID;
@@ -221,7 +255,7 @@ int Board::checkForLineClear() {
                 isFullLine = false;
                 break;
             }
-        }
+        } 
 
         if (isFullLine) {
             std::cout << "Line clear detected at line#" << i << "\n";
@@ -244,7 +278,7 @@ int Board::checkForLineClear() {
 }
 
 void Board::GameOver() {
-    std::cout << "Game over";
+    std::cout << "Game over\n";
     isGameOver = true;
 }
 
@@ -253,9 +287,12 @@ void Board::boardUpdate() {
         if (currentPiece->isLocked) {
             int clears = checkForLineClear();
             currentPiece->generateNewPiece(queue);
-            if (!canMove(currentPiece->x, currentPiece->y, 0)) GameOver();
+            if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) GameOver();
         }
-        deleteOldBlock();
         putBlockInPlace();
     }
+}
+
+bool Board::isGameGoing() {
+    return !isGameOver;
 }
