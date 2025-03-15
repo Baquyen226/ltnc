@@ -3,6 +3,18 @@
 #define PIECES_H
 #endif
 
+enum PieceType {
+	I_PIECE = 0,
+	L_PIECE,
+	J_PIECE,
+	S_PIECE,
+	Z_PIECE,
+	T_PIECE,
+	O_PIECE,
+	BAG_SIZE
+};
+
+
 const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	//I piece (piece 1, please read enum later lol)
 	{
@@ -23,8 +35,8 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	//Rotation 2
 	{
 		{0,0,0,0},
-		{1,1,1,1},
 		{0,0,0,0},
+		{1,1,1,1},
 		{0,0,0,0}
 	},
 	//Rotation 3
@@ -47,23 +59,23 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	},
 	//Rotation 1
 	{
+		{0,2,2,0},
 		{0,2,0,0},
 		{0,2,0,0},
-		{2,2,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 2
 	{
+		{0,0,0,0},
 		{2,2,2,0},
 		{0,0,2,0},
-		{0,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 3
 	{
+		{0,2,0,0},
+		{0,2,0,0},
 		{2,2,0,0},
-		{2,0,0,0},
-		{2,0,0,0},
 		{0,0,0,0}
 	}
 },
@@ -79,23 +91,23 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	},
 	//Rotation 1
 	{
-		{0,0,0,0},
+		{0,3,0,0},
+		{0,3,0,0},
 		{0,3,3,0},
-		{0,0,3,0},
-		{0,0,3,0}
+		{0,0,0,0}
 	},
 	//Rotation 2
 	{
 		{0,0,0,0},
-		{0,3,3,3},
-		{0,3,0,0},
+		{3,3,3,0},
+		{3,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 3
 	{
+		{3,3,0,0},
 		{0,3,0,0},
 		{0,3,0,0},
-		{0,3,3,0},
 		{0,0,0,0}
 	},
 },
@@ -104,9 +116,9 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 {
 	//Rotation 0
 	{
-		{0,0,0,0},
 		{4,4,0,0},
 		{0,4,4,0},
+		{0,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 1
@@ -125,9 +137,9 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	},
 	//Rotation 3
 	{
-		{0,0,4,0},
-		{0,4,4,0},
 		{0,4,0,0},
+		{4,4,0,0},
+		{4,0,0,0},
 		{0,0,0,0}
 	}
 },
@@ -136,9 +148,9 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 {
 	//Rotation 0
 	{
-		{0,0,0,0},
 		{0,5,5,0},
 		{5,5,0,0},
+		{0,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 1
@@ -157,9 +169,9 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 	},
 	//Rotation 3
 	{
+		{5,0,0,0},
+		{5,5,0,0},
 		{0,5,0,0},
-		{0,5,5,0},
-		{0,0,5,0},
 		{0,0,0,0}
 	}
 },
@@ -168,30 +180,30 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 {
 	//Rotation 0
 	{
-		{0,0,0,0},
 		{0,6,0,0},
 		{6,6,6,0},
+		{0,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 1
 	{
-		{0,0,6,0},
+		{0,6,0,0},
 		{0,6,6,0},
-		{0,0,6,0},
+		{0,6,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 2
 	{
+		{0,0,0,0},
 		{6,6,6,0},
 		{0,6,0,0},
-		{0,0,0,0},
 		{0,0,0,0}
 	},
 	//Rotation 3
 	{
-		{6,0,0,0},
+		{0,6,0,0},
 		{6,6,0,0},
-		{6,0,0,0},
+		{0,6,0,0},
 		{0,0,0,0}
 	}
 },
@@ -230,3 +242,32 @@ const int Piece_Shape[7 /*No of pieces*/][4 /*No of rotations*/][4][4] = {
 }
 };
 
+//Wall kick data(reference: https://tetris.fandom.com/wiki/SRS)
+
+const int defaultOffsetData[4][5][2] = {
+	//rotation 0 -> 1
+   {{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
+
+	//rotation 1 -> 2
+   {{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
+
+	//rotation 2 -> 3
+   {{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
+
+   //rotation 3 -> 0
+   {{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}
+};
+
+const int I_Piece_offsetData[4][5][2] = {
+	//rotation 0
+	{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}},
+
+	//rotation 1
+	{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}},
+
+	//rotation 2
+	{{0, 0}, {2, 0}, {-1, 0}, {1, -2}, {-2, 1}},
+
+	//rotation 3
+	{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}}
+};

@@ -1,5 +1,6 @@
 #include "board.h"
 #include "queue.h"
+#include "pieces.h"
 
 #include <SDL3/SDL.h>
 
@@ -119,6 +120,8 @@ void Board::Render(SDL_Renderer* renderer) {
             SDL_RenderRect(renderer, &cell);
         }
     }
+
+    queue->Render(renderer);
 }
 
 
@@ -130,24 +133,22 @@ bool Board::canMove(int newX, int newY, int newRotation) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {
-                int boardX = newX + j;  // Calculate the board X coordinate
-                int boardY = newY + i;  // Calculate the board Y coordinate
+                int boardX = newX + j;
+                int boardY = newY + i;  
 
-                // Check if the piece is out of bounds
-                if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
-                    std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
+                if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
+                    //std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
                     return false;  // Out of bounds, the move is invalid
                 }
 
-                // Check if the cell is already occupied (collision)
                 if (boardY >= 0 && pBoard[boardY][boardX] != 0) {
-                    std::cout << "Collision at (" << boardX << ", " << boardY << ")\n";
+                    //std::cout << "Collision at (" << boardX << ", " << boardY << ")\n";
                     return false;  // The spot is occupied, can't move
                 }
             }
         }
     }
-    return true;  // If no collisions, return true (valid move)
+    return true; 
 }
 
 
@@ -155,7 +156,9 @@ void Board::moveRight() {
     lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     int newX = currentPiece->x + 1;
     deleteOldBlock();
+
     if (!Board::canMove(newX, currentPiece->y, currentPiece->rotation)) return;
+
     currentPiece->moveRight();
 }
 
@@ -163,24 +166,81 @@ void Board::moveLeft() {
     lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     int newX = currentPiece->x - 1;
     deleteOldBlock();
+
     if (!Board::canMove(newX, currentPiece->y, currentPiece->rotation)) return;
+
     currentPiece->moveLeft();
 }
 
 void Board::Rotate() {
     lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
-    int newRotate = (currentPiece->rotation + 3) % 4;
+    int newRotate = (currentPiece->rotation + 5) % 4;
     deleteOldBlock();
-    if (!Board::canMove(currentPiece->x, currentPiece->y, newRotate)) return;
-    currentPiece->rotate(-1);
+
+    for (int i = 0; i < 5; ++i) {
+		int offsetX = 0, offsetY = 0;
+        switch (currentPiece->pieceID) {
+        case O_PIECE:
+            offsetX = 0; offsetY = 0;
+            break;
+		case I_PIECE:
+			offsetX = I_Piece_offsetData[newRotate][i][0];
+			offsetY = -I_Piece_offsetData[newRotate][i][1];
+            break;
+        default:
+			offsetX = defaultOffsetData[newRotate][i][0];
+			offsetY = -defaultOffsetData[newRotate][i][1];
+            break;
+        }
+
+        int newX = currentPiece->x + offsetX;
+        int newY = currentPiece->y + offsetY;
+
+        if (Board::canMove(newX, newY, newRotate)) {
+            // Apply the successful wall kick
+            currentPiece->x = newX;
+            currentPiece->y = newY;
+			currentPiece->rotate(1); //seems a bit coun
+            break;
+        }
+    }
+
+    return;
 }
 
 void Board::ReversedRotate() {
     lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
-    int newRotate = (currentPiece->rotation + 5) % 4;
+    int newRotate = (currentPiece->rotation + 3) % 4;
+	int curRotate = currentPiece->rotation;
     deleteOldBlock();
-    if (!Board::canMove(currentPiece->x, currentPiece->y, newRotate)) return;
-    currentPiece->rotate(1);
+
+    for (int i = 0; i < 5; ++i) {
+        int offsetX = 0, offsetY = 0;
+        switch (currentPiece->pieceID) {
+        case O_PIECE:
+            offsetX = 0; offsetY = 0;
+            break;
+        case I_PIECE:
+            offsetX = -I_Piece_offsetData[curRotate][i][0];
+            offsetY = I_Piece_offsetData[curRotate][i][1];
+            break;
+        default:
+            offsetX = -defaultOffsetData[curRotate][i][0];
+            offsetY = defaultOffsetData[curRotate][i][1];
+            break;
+        }
+
+        int newX = currentPiece->x + offsetX;
+        int newY = currentPiece->y + offsetY;
+
+        if (Board::canMove(newX, newY, newRotate)) {
+            // Apply the successful wall kick
+            currentPiece->x = newX;
+            currentPiece->y = newY;
+            currentPiece->rotate(-1);
+            break;
+        }
+    }
 }
 
 void Board::HardDrop() {
@@ -208,8 +268,10 @@ void Board::SoftDrop() {
 }
 
 void Board::deleteOldBlock() {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    int size = currentPiece->getPieceSize();
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
             int id          = lastPieceState.id;
             int boardX      = lastPieceState.x + j;
             int boardY      = lastPieceState.y + i;
@@ -232,8 +294,10 @@ void Board::putBlockInPlace() {
         return;
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+	int size = currentPiece->getPieceSize();
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
             int id = currentPiece->pieceID;
             int boardX = currentPiece->x + j;
             int boardY = currentPiece->y + i;
@@ -258,7 +322,7 @@ int Board::checkForLineClear() {
         } 
 
         if (isFullLine) {
-            std::cout << "Line clear detected at line#" << i << "\n";
+            //std::cout << "Line clear detected at line#" << i << "\n";
             lineCleared++;
 
             // shift all rows above down
@@ -274,7 +338,40 @@ int Board::checkForLineClear() {
             }
         }
     }
+    if (lineCleared >= 1) {
+        totalLineCleared += lineCleared;
+        lineClearedThisLevel += lineCleared;
+        if (lineClearedThisLevel > 10) {
+            level++;
+            lineClearedThisLevel -= 10;
+            gravity = gravity - (level + 1) * GRAVITY_INCREMENT;
+            if (gravity < 0) gravity = 1;
+        }
+        points += reward[lineCleared - 1] * (level + 1);
+        std::cout << "Line cleared: " << totalLineCleared << "\n";
+        std::cout << "Points: " << points << "\n";
+        std::cout << "frames/falldown: " << gravity;
+    }
     return lineCleared;
+}
+
+void Board::fallDown() {
+    if (currentPiece->isLocked) return;
+    if (fTimer >= gravity) {
+        fTimer = 0;
+        lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+        deleteOldBlock();
+        if (canMove(currentPiece->x, currentPiece->y + 1, currentPiece->rotation)) {
+            currentPiece->moveDown();
+        }
+        else {
+            currentPiece->isLocked = true;
+            putBlockInPlace();
+        }
+    }
+    else {
+        fTimer++;
+    }
 }
 
 void Board::GameOver() {
@@ -290,6 +387,7 @@ void Board::boardUpdate() {
             if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) GameOver();
         }
         putBlockInPlace();
+        fallDown();
     }
 }
 

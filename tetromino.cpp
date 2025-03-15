@@ -1,11 +1,21 @@
 #include "tetromino.h"
 
+ int Tetromino::getPieceSize() {
+	switch (pieceID) {
+	case I_PIECE:
+		return 4;
+	default:
+		return 3;
+	}
+}
+
 void Tetromino::generateNewPiece(Queue* queue) {
-	this->pieceID	= queue->getNextPiece();
+	this->pieceID	= (PieceType)queue->getNextPiece();
 	this->x			= INITIAL_PIECE_POSITION_X;
 	this->y			= INITIAL_PIECE_POSITION_Y;
 	this->rotation	= INITIAL_ROTATION_STATE;
-	this->isLocked  = false;
+	this->pieceSize = getPieceSize();
+	this->isLocked	= false;
 }
 
 int Tetromino::getPieceID() {
@@ -34,5 +44,5 @@ void Tetromino::moveRight() {
 }
 
 void Tetromino::moveDown() {
-	y--;
+	y++;
 }

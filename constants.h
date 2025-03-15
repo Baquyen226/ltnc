@@ -3,6 +3,7 @@
 #define CONSTANTS_H
 #include <SDL3/SDL.h>
 #include <string>
+#include <vector>
 
 const int TARGET_FPS = 60;
 const int FRAME_DELAY = 1000 / TARGET_FPS;
@@ -30,13 +31,16 @@ SDL_Color COLOR_BLUE		= { 72, 93, 197 };
 */
 
 const int PIECE_PREVIEW					= 3;
+const int PREVIEW_OFFSET_X				= BOARD_OFFSET_X + CELL_SIZE * 10 + SCREEN_WIDTH/20;
+const int PREVIEW_OFFSET_Y				= BOARD_OFFSET_Y + CELL_SIZE * 2;
 
-const int INITIAL_PIECE_POSITION_X		= 4;
+const int INITIAL_PIECE_POSITION_X		= 3;
 const int INITIAL_PIECE_POSITION_Y		= 1;
 const int INITIAL_ROTATION_STATE		= 0;
 
-const int BASE_GRAVITY					= 40;
-const int GRAVITY_INCREMENT				= 2;
+const int BASE_GRAVITY					= 90;
+const int LINE_BETWEEN_LEVELS			= 30;
+const int GRAVITY_INCREMENT				= 4;
 
 
 

@@ -9,9 +9,11 @@
 struct Tetromino {
     int x, y;
     int rotation;
-    int pieceID;
+    PieceType pieceID;
     bool isLocked = false;
+    int pieceSize;
 
+    int  getPieceSize();
     void generateNewPiece(Queue*);  // Generates a new piece based on the queue
     int  getPieceID();
     void rotate(int dr);  // Rotate the piece 90 degrees
