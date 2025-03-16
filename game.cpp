@@ -1,24 +1,33 @@
 #include "SDL.h"
+#include "SDL_ttf.h"
 #include <iostream>
 
 #include "game.h"
 #include "board.h"
+#include "texture.h"
+#include "constants.h"
 
-
-Board* board = new Board();
+Board* board = NULL;
 
 void Game::Init() {
+	//SDL stuff
 	bool initialized = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
 	if (initialized) std::cerr << "SDL Initialized!" << std::endl;
+	else std::cerr << "Failed to initialize SDL: " << SDL_GetError << std::endl;
+
+	initialized = TTF_Init();
+	if (initialized) std::cerr << "SDL_TTF Initialized!" << std::endl;
+	else std::cerr << "Failed to initialize SDL_TTF: " << SDL_GetError << std::endl;
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	if (window != NULL) std::cerr << "Window created!" << std::endl;
 	else std::cerr << "An error occcured: " << SDL_GetError << std::endl;
 
 	renderer = SDL_CreateRenderer(window, NULL);
-	if (window != NULL) std::cerr << "Renderer created!" << std::endl;
+	if (renderer != NULL) std::cerr << "Renderer created!" << std::endl;
 	else std::cerr << "An error occcured: " << SDL_GetError << std::endl;
 
+	board = new Board();
 	isRunning = true;
 }
 
@@ -61,5 +70,8 @@ void Game::Clean() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+	TTF_Quit();
+	renderer = NULL;
+	window = NULL;
 	std::cerr << "Game exited!" << std::endl;
 }

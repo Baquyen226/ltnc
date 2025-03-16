@@ -3,16 +3,20 @@
 #define BOARD_H
 #include <iostream>
 #include <SDL3/SDL.h>
-#include <map>
+#include <SDL3/SDL_ttf.h>
 
 #include "constants.h"
 #include "queue.h"
 #include "tetromino.h"
+#include "stats.h"
+#include "texture.h"
 
 class Board {
 public:
+	GameStats	stats;
 
 	Board();
+	void	Clean();
 	int**	getPlayingField();
 	void	clearBoard();
 	void	printBoard();
@@ -32,20 +36,15 @@ public:
 	void	boardUpdate();
 	void	GameOver();
 	bool	isGameGoing();
-	void	fallDown();
+	void	fallDown();	
 private:
 	int			pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 	int			fTimer	;
 	int			level	;
-	int			totalLineCleared = 0;
-	int			lineClearedThisLevel = 0;
-	int			gravity = BASE_GRAVITY;
-	int			points = 0;
-	int			reward[4] = {40, 120, 300, 1200};
 	bool		isGameOver = false;
-	Queue*		queue = NULL;
-	Tetromino*	currentPiece = NULL;
 
+	Queue*		queue = NULL;
+	Tetromino* currentPiece = NULL;
 };
 
 

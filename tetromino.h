@@ -7,9 +7,9 @@
 #include "queue.h"
 
 struct Tetromino {
-    int x, y;
-    int rotation;
-    PieceType pieceID;
+    int x = 0, y = 0;
+    int rotation = 0;
+    PieceType pieceID = O_PIECE;
     bool isLocked = false;
     int pieceSize;
 

@@ -95,7 +95,8 @@ void Queue::Render(SDL_Renderer* renderer) {
 
         int size = (pieceID == I_PIECE) ? 4 : 3, 
             x    = PREVIEW_OFFSET_X                     + firstColumnOccupied * CELL_SIZE / 2 ,
-            y    = PREVIEW_OFFSET_Y + CELL_SIZE * 3 * i + firstRowOccupied * CELL_SIZE        + ((pieceID == I_PIECE) ? 0.5 : 0)* CELL_SIZE; //surely this is not too confusing( the I piece just cant align with the two first row/cl checks:( )
+            y    = PREVIEW_OFFSET_Y + CELL_SIZE * 3 * i + firstRowOccupied * CELL_SIZE        + ((pieceID == I_PIECE) ? 0.5 : 0)* CELL_SIZE; 
+        //surely this is not too confusing( the I piece just cant align with the two first row/cl checks:( )
 
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < size; k++) {

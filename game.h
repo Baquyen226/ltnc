@@ -1,7 +1,8 @@
 #pragma once
 #ifndef GAME_H
 #define GAME_H
-#include <SDL3/SDL.h>
+
+#include <SDL.h>
 
 class Game {
 public:

@@ -1,8 +1,10 @@
+#include <SDL3/SDL.h>
+#include <string>
+#include <iostream>
+
 #include "board.h"
 #include "queue.h"
 #include "pieces.h"
-
-#include <SDL3/SDL.h>
 
 //lazy fix
 struct PreviousPieceState {
@@ -23,6 +25,8 @@ struct PreviousPieceState {
     }
 };
 
+PreviousPieceState lastPieceState;
+
 Board::Board() {
     queue = new Queue();
     currentPiece = new Tetromino();
@@ -32,7 +36,10 @@ Board::Board() {
 	clearBoard();
 }
 
-PreviousPieceState lastPieceState;
+void Board::Clean() {
+    free(currentPiece);
+    currentPiece = NULL;
+}
 
 int** Board::getPlayingField() {
 	return reinterpret_cast<int**>(pBoard);
@@ -122,6 +129,7 @@ void Board::Render(SDL_Renderer* renderer) {
     }
 
     queue->Render(renderer);
+    stats.Render(renderer);
 }
 
 
@@ -339,25 +347,22 @@ int Board::checkForLineClear() {
         }
     }
     if (lineCleared >= 1) {
-        totalLineCleared += lineCleared;
-        lineClearedThisLevel += lineCleared;
-        if (lineClearedThisLevel > 10) {
-            level++;
-            lineClearedThisLevel -= 10;
-            gravity = gravity - (level + 1) * GRAVITY_INCREMENT;
-            if (gravity < 0) gravity = 1;
-        }
-        points += reward[lineCleared - 1] * (level + 1);
-        std::cout << "Line cleared: " << totalLineCleared << "\n";
-        std::cout << "Points: " << points << "\n";
-        std::cout << "frames/falldown: " << gravity;
+        stats.Update(lineCleared);
+        std::cout << "Line cleared: " << stats.totalLineCleared << "\n";
+        std::cout << "Points: " << stats.points << "\n";
+        std::cout << "frames/falldown: " << stats.gravity << "\n\n";
     }
     return lineCleared;
 }
 
 void Board::fallDown() {
+    if (currentPiece == NULL) {
+        std::cerr << "The game is likely over, so currentPiece is NULL\n";
+        return;
+    }
+
     if (currentPiece->isLocked) return;
-    if (fTimer >= gravity) {
+    if (fTimer >= stats.gravity) {
         fTimer = 0;
         lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
         deleteOldBlock();
@@ -377,18 +382,18 @@ void Board::fallDown() {
 void Board::GameOver() {
     std::cout << "Game over\n";
     isGameOver = true;
+    Clean();
 }
 
 void Board::boardUpdate() {
-    if (!isGameOver) {
-        if (currentPiece->isLocked) {
+    if (isGameOver) return;
+    if (currentPiece->isLocked) {
             int clears = checkForLineClear();
             currentPiece->generateNewPiece(queue);
             if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) GameOver();
-        }
+    }
         putBlockInPlace();
         fallDown();
-    }
 }
 
 bool Board::isGameGoing() {
