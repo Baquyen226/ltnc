@@ -31,6 +31,9 @@ const int BASE_GRAVITY					= 90;
 const int LINE_BETWEEN_LEVELS			= 10;
 const int GRAVITY_INCREMENT				= 5;
 
+const int DELAYED_AUTO_SHIFT			= 90; //6f equivalent
+const int REPEAT_RATE					= 1;
+const int SOFT_DROP_SPEED				= 1;
 
 
 

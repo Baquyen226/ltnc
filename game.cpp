@@ -8,6 +8,18 @@
 #include "constants.h"
 
 Board* board = NULL;
+Uint32 leftPressed;
+Uint32 rightPressed;
+Uint32 timeHeldLeft;
+Uint32 timeHeldRight;
+bool isRightHeld = false;
+bool isLeftHeld = false;
+
+enum GameState {
+	MENU,
+	INGAME,
+	CONFIG
+};
 
 void Game::Init() {
 	//SDL stuff
@@ -40,14 +52,32 @@ void Game::HandleEvents() {
 			break;
 		case SDL_EVENT_KEY_DOWN:
 			if (board->isGameGoing()) {
-				if (event.key.key == SDLK_RIGHT) board->moveRight();
-				if (event.key.key == SDLK_LEFT) board->moveLeft();
+				if (event.key.key == SDLK_RIGHT) {
+					isRightHeld = true;
+					rightPressed = SDL_GetTicks();
+					board->moveRight();
+				}
+				if (event.key.key == SDLK_LEFT) {
+					isLeftHeld = true;
+					leftPressed = SDL_GetTicks();
+					board->moveLeft();
+				}
 				if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */) board->Rotate();
 				if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */) board->ReversedRotate();
-				if (event.key.key == SDLK_SPACE) board->HardDrop();
+				if (event.key.key == SDLK_A && !event.key.repeat /*Not a repeat */) board->Rotate180();
+				if (event.key.key == SDLK_SPACE && !event.key.repeat /*Not a repeat */) board->HardDrop();
 				if (event.key.key == SDLK_DOWN) board->SoftDrop();
 			}
-
+			break;
+		case SDL_EVENT_KEY_UP:
+			if (board->isGameGoing()) {
+				if (event.key.key == SDLK_RIGHT) {
+					isRightHeld = false;
+				}
+				if (event.key.key == SDLK_LEFT) {
+					isLeftHeld = false;
+				}
+			}
 			break;
 		default:
 			break;
@@ -56,7 +86,23 @@ void Game::HandleEvents() {
 }
 
 void Game::Update() {
+	Uint32 now = SDL_GetTicks();
+
+	if (isRightHeld) {
+		if (now - rightPressed > DELAYED_AUTO_SHIFT) {
+			int p = (now - rightPressed) % REPEAT_RATE;
+			if (p == 0) board->moveRight();
+		}
+	}
+
+	if (isLeftHeld) {
+		if (now - leftPressed > DELAYED_AUTO_SHIFT) {
+			int p = (now - leftPressed) % REPEAT_RATE;
+			if (p == 0) board->moveLeft();
+		}
+	}
 	board->boardUpdate();
+
 }
 
 void Game::Render() {

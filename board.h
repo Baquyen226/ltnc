@@ -11,6 +11,19 @@
 #include "stats.h"
 #include "texture.h"
 
+//Movement stuff
+enum MovementType {
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	ROTATE_CW,
+	ROTATE_CCW,
+	ROTATE_180,
+	SOFT_DROP,
+	HARD_DROP,
+	FALSE_HARD_DROP //for ghost piece
+};
+
+
 class Board {
 public:
 	GameStats	stats;
@@ -24,19 +37,23 @@ public:
 	void	Render(SDL_Renderer* renderer);
 	void	editCell(int i, int j, int val);
 	bool	canMove(int x, int y, int r);
-	void	moveRight();
-	void	moveLeft();
-	void	Rotate();
-	void	ReversedRotate();
-	void	HardDrop();
-	void	SoftDrop();
+	bool	tryRotation(int newRotation, int direction);
+	bool 	movePiece(MovementType movement);
 	void	deleteOldBlock();
 	void	putBlockInPlace();
 	int		checkForLineClear();
 	void	boardUpdate();
 	void	GameOver();
 	bool	isGameGoing();
-	void	fallDown();	
+
+	//:(
+	void	moveRight();
+	void	moveLeft();
+	void	Rotate();
+	void	ReversedRotate();
+	void	Rotate180();	
+	void	HardDrop();
+	void	SoftDrop();
 private:
 	int			pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 	int			fTimer	;
