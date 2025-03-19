@@ -14,7 +14,7 @@ struct Tetromino {
     int pieceSize;
 
     int  getPieceSize();
-    void generateNewPiece(Queue*);  // Generates a new piece based on the queue
+    void generateNewPiece(Queue*, int);  // Generates a new piece based on the queue
     int  getPieceID();
     void rotate(int dr);  // Rotate the piece 90 degrees
     void setPosition(int &x, int &y);  // Set the position of the piece

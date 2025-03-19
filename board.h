@@ -54,11 +54,17 @@ public:
 	void	Rotate180();	
 	void	HardDrop();
 	void	SoftDrop();
+
+	//probably not the best idea to group these together
+	void	HoldPiece();
 private:
 	int			pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 	int			fTimer	;
 	int			level	;
 	bool		isGameOver = false;
+
+	int 		holdPiece = -1;
+	bool		isHoldUsed = false;
 
 	Queue*		queue = NULL;
 	Tetromino* currentPiece = NULL;

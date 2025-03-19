@@ -18,10 +18,12 @@ const int CELL_SIZE			= 30			;
 //Board position(cell at 0,0)
 const int BOARD_OFFSET_X	= SCREEN_WIDTH  / 2 - 200;
 const int BOARD_OFFSET_Y	= SCREEN_HEIGHT / 2 - 300;
-
+const int HOLD_PIECE_OFFSET_X = BOARD_OFFSET_X - CELL_SIZE * 7;
+const int HOLD_PIECE_OFFSET_Y = BOARD_OFFSET_Y + CELL_SIZE * 2;
 const int PIECE_PREVIEW					= 3;
 const int PREVIEW_OFFSET_X				= BOARD_OFFSET_X + CELL_SIZE * 10 + SCREEN_WIDTH/20;
 const int PREVIEW_OFFSET_Y				= BOARD_OFFSET_Y + CELL_SIZE * 2;
+
 
 const int INITIAL_PIECE_POSITION_X		= 3;
 const int INITIAL_PIECE_POSITION_Y		= 1;

@@ -9,8 +9,8 @@
 	}
 }
 
-void Tetromino::generateNewPiece(Queue* queue) {
-	this->pieceID	= (PieceType)queue->getNextPiece();
+void Tetromino::generateNewPiece(Queue* queue, int pieceRequested = -1) {
+	this->pieceID	= (pieceRequested == -1) ? (PieceType)queue->getNextPiece() : (PieceType)pieceRequested;
 	this->x			= INITIAL_PIECE_POSITION_X;
 	this->y			= INITIAL_PIECE_POSITION_Y;
 	this->rotation	= INITIAL_ROTATION_STATE;

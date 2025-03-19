@@ -14,6 +14,7 @@ Uint32 timeHeldLeft;
 Uint32 timeHeldRight;
 bool isRightHeld = false;
 bool isLeftHeld = false;
+bool isDownHeld = false;
 
 enum GameState {
 	MENU,
@@ -33,11 +34,11 @@ void Game::Init() {
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	if (window != NULL) std::cerr << "Window created!" << std::endl;
-	else std::cerr << "An error occcured: " << SDL_GetError << std::endl;
+	else std::cerr << "An error occcured while trying to create window: " << SDL_GetError << std::endl;
 
 	renderer = SDL_CreateRenderer(window, NULL);
 	if (renderer != NULL) std::cerr << "Renderer created!" << std::endl;
-	else std::cerr << "An error occcured: " << SDL_GetError << std::endl;
+	else std::cerr << "An error occcured while trying to create renderer: " << SDL_GetError << std::endl;
 
 	board = new Board();
 	isRunning = true;
@@ -62,11 +63,15 @@ void Game::HandleEvents() {
 					leftPressed = SDL_GetTicks();
 					board->moveLeft();
 				}
+				if (event.key.key == SDLK_DOWN) {
+					isDownHeld = true;
+					board->SoftDrop();
+				}
 				if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */) board->Rotate();
 				if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */) board->ReversedRotate();
 				if (event.key.key == SDLK_A && !event.key.repeat /*Not a repeat */) board->Rotate180();
+				if (event.key.key == SDLK_C && !event.key.repeat /*Not a repeat */) board->HoldPiece();
 				if (event.key.key == SDLK_SPACE && !event.key.repeat /*Not a repeat */) board->HardDrop();
-				if (event.key.key == SDLK_DOWN) board->SoftDrop();
 			}
 			break;
 		case SDL_EVENT_KEY_UP:
@@ -76,6 +81,9 @@ void Game::HandleEvents() {
 				}
 				if (event.key.key == SDLK_LEFT) {
 					isLeftHeld = false;
+				}
+				if (event.key.key == SDLK_DOWN) {
+					isDownHeld = false;
 				}
 			}
 			break;
@@ -101,6 +109,10 @@ void Game::Update() {
 			if (p == 0) board->moveLeft();
 		}
 	}
+
+	if (isDownHeld) {
+		board->SoftDrop();
+	}
 	board->boardUpdate();
 
 }
@@ -117,6 +129,9 @@ void Game::Clean() {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	TTF_Quit();
+	board->Clean();
+	delete board;
+	board = NULL;
 	renderer = NULL;
 	window = NULL;
 	std::cerr << "Game exited!" << std::endl;

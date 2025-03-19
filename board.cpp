@@ -33,11 +33,15 @@ Board::Board() {
     currentPiece = new Tetromino();
     queue->generateNewBag();
     queue->previewQueueUpdate();
-    currentPiece->generateNewPiece(queue);
+    currentPiece->generateNewPiece(queue, -1);
 	clearBoard();
 }
 
 void Board::Clean() {
+	delete queue;
+	delete currentPiece;
+	queue = NULL;
+	currentPiece = NULL;
 }
 
 int** Board::getPlayingField() {
@@ -95,6 +99,40 @@ void Board::getRenderColor(SDL_Renderer* renderer, int piece_id) {
 }
 
 void Board::Render(SDL_Renderer* renderer) {
+    //render hold piece
+	PieceType holdPieceID = (PieceType)holdPiece;
+	SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_RenderRect(renderer, &holdPieceContainer);
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderFillRect(renderer, &holdPieceContainer);
+
+	int size = (holdPieceID == I_PIECE) ? 4 : 3;
+
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			if (Piece_Shape[holdPieceID][0][i][j] != 0) {
+                //Pieces that has block at the first row on spawn state: S, Z, T
+                bool firstRowOccupied = (holdPieceID == S_PIECE || holdPieceID == Z_PIECE || holdPieceID == T_PIECE);
+                //Pieces (except I piece) that has the first column occupied
+                bool firstColumnOccupied = !(holdPieceID == I_PIECE || holdPieceID == O_PIECE);
+
+                int cellSize_posX = HOLD_PIECE_OFFSET_X + firstColumnOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * j + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
+                    cellSize_posY = HOLD_PIECE_OFFSET_Y + firstRowOccupied * CELL_SIZE    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * i;
+
+				SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
+
+				getRenderColor(renderer, holdPieceID + 1);
+				SDL_RenderFillRect(renderer, &cell);
+
+				SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+				SDL_RenderRect(renderer, &cell);
+			}
+		}
+	}
+	SDL_FRect holdPieceCell = { HOLD_PIECE_OFFSET_X + CELL_SIZE, HOLD_PIECE_OFFSET_Y + CELL_SIZE, CELL_SIZE, CELL_SIZE };
+
     //render the last 2 lines without the board grid(otherwise the piece would just look weird)
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -203,6 +241,9 @@ bool Board::canMove(int newX, int newY, int newRotation) {
 bool Board::tryRotation(int newRotation, int direction) {
     for (int i = 0; i < 5; ++i) {
         int offsetX = 0, offsetY = 0;
+        //0(currentRotation)->1(newRotation) uses index 0 when referencing the kick table when rotating clockwise              
+		//1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
+		//therefore CW uses currenRotation, CCW uses newRotation, except its multiplied by -1(direction)
 
         switch (currentPiece->pieceID) {
         case O_PIECE:
@@ -210,22 +251,22 @@ bool Board::tryRotation(int newRotation, int direction) {
             break;
         case I_PIECE:
             if (direction > 0) {
-                offsetX = I_Piece_offsetData[newRotation][i][0];
-                offsetY = -I_Piece_offsetData[newRotation][i][1];
+                offsetX = I_Piece_offsetData[currentPiece->rotation][i][0];
+                offsetY = -I_Piece_offsetData[currentPiece->rotation][i][1];
             }
             else {
-                offsetX = -I_Piece_offsetData[currentPiece->rotation][i][0];
-                offsetY = I_Piece_offsetData[currentPiece->rotation][i][1];
+                offsetX = -I_Piece_offsetData[newRotation][i][0];
+                offsetY = I_Piece_offsetData[newRotation][i][1];
             }
             break;
         default:
             if (direction > 0) {
-                offsetX = defaultOffsetData[newRotation][i][0];
-                offsetY = -defaultOffsetData[newRotation][i][1];
+                offsetX = defaultOffsetData[currentPiece->rotation][i][0];
+                offsetY = -defaultOffsetData[currentPiece->rotation][i][1];
             }
             else {
-                offsetX = -defaultOffsetData[currentPiece->rotation][i][0];
-                offsetY = defaultOffsetData[currentPiece->rotation][i][1];
+                offsetX = -defaultOffsetData[newRotation][i][0];
+                offsetY = defaultOffsetData[newRotation][i][1];
             }
             break;
         }
@@ -399,7 +440,6 @@ int Board::checkForLineClear() {
 void Board::GameOver() {
     std::cout << "Game over\n";
     isGameOver = true;
-    Clean();
 }
 
 void Board::boardUpdate() {
@@ -407,8 +447,9 @@ void Board::boardUpdate() {
 
     // Handle locked pieces
     if (currentPiece->isLocked) {
+		isHoldUsed = false;
         int clears = checkForLineClear();
-        currentPiece->generateNewPiece(queue);
+        currentPiece->generateNewPiece(queue, -1);
         if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) {
             GameOver();
             return;
@@ -460,4 +501,21 @@ void Board::HardDrop() {
 
 void Board::SoftDrop() {
     movePiece(SOFT_DROP);
+}
+
+
+void Board::HoldPiece() {
+	if (isHoldUsed) return;
+
+    deleteOldBlock();
+	if (holdPiece == -1) {
+		holdPiece = currentPiece->pieceID;
+		currentPiece->generateNewPiece(queue, -1);
+	}
+	else {
+		int temp = holdPiece;
+		holdPiece = currentPiece->pieceID;
+		currentPiece->generateNewPiece(queue, temp);
+	}
+	isHoldUsed = true;
 }
