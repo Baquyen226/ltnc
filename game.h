@@ -3,9 +3,20 @@
 #define GAME_H
 
 #include <SDL.h>
+#include "board.h"
+#include "menu.h"
+
+enum GameState {
+	MENU,
+	INGAME,
+	CONFIG
+};
 
 class Game {
 public:
+	GameState GAME_STATE = MENU;
+	Menu* menu = NULL;
+
 	void Init();
 	void HandleEvents();
 	void Update();
@@ -16,6 +27,23 @@ private:
 	bool isRunning;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+
+	//keypress stuff
+	Uint32 leftPressed;
+	Uint32 rightPressed;
+	Uint32 timeHeldLeft;
+	Uint32 timeHeldRight;
+	bool isRightHeld = false;
+	bool isLeftHeld = false;
+	bool isDownHeld = false;
+
+	Board* board = NULL;
+
+	//handle game state, function is in gameManager.cpp
+	void handleMenu(SDL_Event &event);
+	void handleGame(SDL_Event& event);
+	void handleConfig(SDL_Event& event);
+
 };
 
 #endif
