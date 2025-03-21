@@ -5,6 +5,7 @@
 #include "board.h"
 #include "queue.h"
 #include "pieces.h"
+#include "sfx.h"
 
 //lazy fix
 struct PreviousPieceState {
@@ -38,10 +39,12 @@ Board::Board() {
 }
 
 void Board::Clean() {
-	delete queue;
-	delete currentPiece;
-	queue = NULL;
-	currentPiece = NULL;
+    if (queue != NULL && currentPiece != NULL) {
+        delete queue;
+        delete currentPiece;
+        queue = NULL;
+        currentPiece = NULL;
+    }
 }
 
 int** Board::getPlayingField() {
@@ -440,6 +443,8 @@ int Board::checkForLineClear() {
 void Board::GameOver() {
     std::cout << "Game over\n";
     isGameOver = true;
+    std::string death = "asset/sound/death.wav";
+    sfx.playSound(death, GAME_EVENT);
 }
 
 void Board::boardUpdate() {
@@ -503,10 +508,11 @@ void Board::SoftDrop() {
     movePiece(SOFT_DROP);
 }
 
-
+std::string hold = "asset/sound/hold.wav";
 void Board::HoldPiece() {
 	if (isHoldUsed) return;
 
+	lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     deleteOldBlock();
 	if (holdPiece == -1) {
 		holdPiece = currentPiece->pieceID;
@@ -517,5 +523,6 @@ void Board::HoldPiece() {
 		holdPiece = currentPiece->pieceID;
 		currentPiece->generateNewPiece(queue, temp);
 	}
+    sfx.playSound(hold, PIECE_ROTATE);
 	isHoldUsed = true;
 }

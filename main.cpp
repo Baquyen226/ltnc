@@ -27,6 +27,8 @@ int main() {
 		}
 	}
 
-	game->Clean();
+	if (game != NULL) {
+		game->Clean();
+	}
 	return 0;
 }

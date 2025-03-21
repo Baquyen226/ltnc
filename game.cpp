@@ -1,5 +1,6 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "SDL_mixer.h"
 #include <iostream>
 
 #include "game.h"
@@ -10,21 +11,40 @@ Board* board = NULL;
 
 void Game::Init() {
 	//SDL stuff
-	bool initialized = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
-	if (initialized) std::cerr << "SDL Initialized!" << std::endl;
-	else std::cerr << "Failed to initialize SDL: " << SDL_GetError << std::endl;
+	bool initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	if (initialized) std::cerr << "SDL Initialized!" << "\n";
+	else std::cerr << "Failed to initialize SDL: " << SDL_GetError << "\n";
 
 	initialized = TTF_Init();
-	if (initialized) std::cerr << "SDL_TTF Initialized!" << std::endl;
-	else std::cerr << "Failed to initialize SDL_TTF: " << SDL_GetError << std::endl;
+	if (initialized) std::cerr << "SDL_TTF Initialized!" << "\n";
+	else std::cerr << "Failed to initialize SDL_TTF: " << SDL_GetError << "\n";
+
+	initialized = Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG);
+	if (initialized) std::cerr << "SDL_Mixer Initialized!" << "\n";
+	else std::cerr << "Failed to initialize SDL_Mixer: " << SDL_GetError << "\n";
+
+	int channel = Mix_AllocateChannels(32);
+	std::cerr << channel << " channels allocated\n";
+	std::cerr << "Actual allocated channels: " << Mix_AllocateChannels(-1) << "\n";
+
+	SDL_AudioSpec spec;
+	spec.freq = MIX_DEFAULT_FREQUENCY;
+	spec.format = MIX_DEFAULT_FORMAT;
+	spec.channels = MIX_DEFAULT_CHANNELS;
+
+	if (!Mix_OpenAudio(0, &spec)) {
+		std::cerr << "Failed to open audio: " << SDL_GetError() << "\n";
+		return;
+	}
+
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-	if (window != NULL) std::cerr << "Window created!" << std::endl;
-	else std::cerr << "An error occcured while trying to create window: " << SDL_GetError << std::endl;
+	if (window != NULL) std::cerr << "Window created!" << "\n";
+	else std::cerr << "An error occcured while trying to create window: " << SDL_GetError << "\n";
 
 	renderer = SDL_CreateRenderer(window, NULL);
-	if (renderer != NULL) std::cerr << "Renderer created!" << std::endl;
-	else std::cerr << "An error occcured while trying to create renderer: " << SDL_GetError << std::endl;
+	if (renderer != NULL) std::cerr << "Renderer created!" << "\n";
+	else std::cerr << "An error occcured while trying to create renderer: " << SDL_GetError << "\n";
 
 	GAME_STATE = MENU;
 
@@ -39,7 +59,7 @@ void Game::HandleEvents() {
 		if (event.type == SDL_EVENT_QUIT) {
 			isRunning = false;
 		}
-		//messy as ???? imagine having multiple ingame state lol surely not right????
+		//messy as ???? imagine having multiple ingame state lol surely not right???? <- clueless
 		switch (GAME_STATE) {
 		case MENU:
 			handleMenu(event);
@@ -110,12 +130,15 @@ void Game::Clean() {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	TTF_Quit();
-	board->Clean();
-	delete board;
+	Mix_Quit();
+	if (board != NULL) {
+		board->Clean();
+		delete board;
+	}
 	delete menu;
 	board = NULL;
 	menu = NULL;
 	renderer = NULL;
 	window = NULL;
-	std::cerr << "Game exited!" << std::endl;
+	std::cerr << "Game exited!" << "\n";
 }

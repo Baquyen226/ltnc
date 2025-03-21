@@ -3,8 +3,10 @@
 #define GAME_H
 
 #include <SDL.h>
+
 #include "board.h"
 #include "menu.h"
+#include "sfx.h"
 
 enum GameState {
 	MENU,

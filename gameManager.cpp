@@ -39,6 +39,12 @@ void Game::handleMenu(SDL_Event& event) {
 	}
 }
 
+
+std::string move = "asset/sound/move.wav";
+std::string rotate = "asset/sound/rotate.wav";
+std::string harddrop = "asset/sound/harddrop.wav";
+
+
 void Game::handleGame(SDL_Event &event) {
 	switch (event.type) {
 	case SDL_EVENT_QUIT:
@@ -50,21 +56,39 @@ void Game::handleGame(SDL_Event &event) {
 				isRightHeld = true;
 				rightPressed = SDL_GetTicks();
 				board->moveRight();
+				sfx.playSound(move, PIECE_MOVING);
 			}
 			if (event.key.key == SDLK_LEFT) {
 				isLeftHeld = true;
 				leftPressed = SDL_GetTicks();
 				board->moveLeft();
+				sfx.playSound(move, PIECE_MOVING);
 			}
 			if (event.key.key == SDLK_DOWN) {
 				isDownHeld = true;
 				board->SoftDrop();
+				sfx.playSound(move, PIECE_MOVING);
 			}
-			if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */) board->Rotate();
-			if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */) board->ReversedRotate();
-			if (event.key.key == SDLK_A && !event.key.repeat /*Not a repeat */) board->Rotate180();
-			if (event.key.key == SDLK_C && !event.key.repeat /*Not a repeat */) board->HoldPiece();
-			if (event.key.key == SDLK_SPACE && !event.key.repeat /*Not a repeat */) board->HardDrop();
+
+			if (event.key.key == SDLK_SPACE && !event.key.repeat /*Not a repeat */) {
+				board->HardDrop();
+				sfx.playSound(harddrop, PIECE_ROTATE);
+			}
+			if (event.key.key == SDLK_X && !event.key.repeat /*Not a repeat */) {
+				board->Rotate();
+				sfx.playSound(rotate, PIECE_ROTATE);
+			}
+			if (event.key.key == SDLK_Z && !event.key.repeat /*Not a repeat */) {
+				board->ReversedRotate();
+				sfx.playSound(rotate, PIECE_ROTATE);
+			}
+			if (event.key.key == SDLK_A && !event.key.repeat /*Not a repeat */) {
+				board->Rotate180();
+				sfx.playSound(rotate, PIECE_ROTATE);
+			}
+			if (event.key.key == SDLK_C && !event.key.repeat /*Not a repeat */) {
+				board->HoldPiece();
+			}
 		}
 		break;
 	case SDL_EVENT_KEY_UP:

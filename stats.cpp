@@ -5,8 +5,8 @@
 #include <cmath>
 
 #include "stats.h"
-#include "constants.h"
-#include "texture.h"
+#include "sfx.h"
+
 
 GameStats::GameStats() {
 	level = 0;
@@ -21,16 +21,24 @@ GameStats::GameStats() {
 void GameStats::addPoints(int clearedLines) {
 	points += reward[clearedLines - 1] * (level + 1);
 }
+
+std::string line1 = "asset/sound/clearline.wav";
+std::string line2 = "asset/sound/clearquad.wav";
+
 void GameStats::addLines(int lines) {
 	totalLineCleared += lines;
 	lineClearedThisLevel += lines;
-
+	if (lines == 4) sfx.playSound(line2, LINE_CLEAR);
+	else sfx.playSound(line1, LINE_CLEAR);
 }
+
 void GameStats::increaseLevel() {
 	level++;
 	lineClearedThisLevel -= 10;
 	gravity = BASE_GRAVITY * pow(0.85, level + 1);
 	if (gravity <= 0) gravity = 1;
+	std::string levelup = "asset/sound/levelup.wav";
+	sfx.playSound(levelup, GAME_EVENT);
 }
 
 void GameStats::Update(int clearedLines) {

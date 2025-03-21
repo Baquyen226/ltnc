@@ -7,7 +7,7 @@
 #include "texture.h"
 
 struct GameStats {
-	int			    level;
+	int			    level = 0;
 	int			    totalLineCleared = 0;
 	int			    lineClearedThisLevel = 0;
 	int			    gravity = BASE_GRAVITY;
