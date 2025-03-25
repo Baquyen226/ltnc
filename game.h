@@ -6,6 +6,7 @@
 
 #include "board.h"
 #include "menu.h"
+#include "configScreen.h"
 #include "sfx.h"
 
 enum GameState {
@@ -24,11 +25,13 @@ public:
 	void Update();
 	void Render();
 	void Clean();
+	void setGameControl(int DAS, int RR);
 	bool Running() { return isRunning; };
 private:
 	bool isRunning;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	ConfigScreen configScreen;
 
 	//keypress stuff
 	Uint32 leftPressed;
@@ -42,9 +45,13 @@ private:
 	Board* board = NULL;
 
 	//handle game state, function is in gameManager.cpp
-	void handleMenu(SDL_Event &event);
+	void handleMenu(SDL_Event& event);
 	void handleGame(SDL_Event& event);
 	void handleConfig(SDL_Event& event);
+
+	//control
+	int DELAYED_AUTO_SHIFT = 150;
+	int REPEAT_RATE = 22;
 
 };
 

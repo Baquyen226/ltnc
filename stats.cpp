@@ -18,6 +18,14 @@ GameStats::GameStats() {
 	toBoard->loadFont("asset/font/8-bit.ttf", 24);
 }
 
+void GameStats::Reset() {
+	level = 0;
+	totalLineCleared = 0;
+	lineClearedThisLevel = 0;
+	points = 0;
+	gravity = BASE_GRAVITY;
+}
+
 void GameStats::addPoints(int clearedLines) {
 	points += reward[clearedLines - 1] * (level + 1);
 }
@@ -51,7 +59,17 @@ void GameStats::Update(int clearedLines) {
 
 void GameStats::Render(SDL_Renderer* renderer) {
 	SDL_Color COLOR_WHITE = { 255, 255, 255, 255 };
+	Uint8 r, g, b, a;
+	SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
 
+	//white outline /w black inside(if it works)
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_FRect statsRect = { 70, 655, 200, 120 };
+	SDL_RenderRect(renderer, &statsRect);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderFillRect(renderer, &statsRect);
+
+	//inside
 	std::string s = "Points: " + std::to_string(points);
 	toBoard->loadTextToTexture(s, COLOR_WHITE, renderer);
 	toBoard->Render(100, 670, renderer, NULL);
@@ -63,6 +81,7 @@ void GameStats::Render(SDL_Renderer* renderer) {
 	s = "Level:  " + std::to_string(level);
 	toBoard->loadTextToTexture(s, COLOR_WHITE, renderer);
 	toBoard->Render(100, 730, renderer, NULL);
+	SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
 
 int GameStats::getLevel() {

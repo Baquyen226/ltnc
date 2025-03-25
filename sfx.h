@@ -22,6 +22,7 @@ public:
 	bool playSound(std::string &path, int priority);
 	void stopMusic();
 	void stopSound();
+	void setVolume(int v);
 private:
 	Mix_Music* music;
 	Mix_Chunk* sound;

@@ -46,16 +46,25 @@ void Game::Init() {
 	if (renderer != NULL) std::cerr << "Renderer created!" << "\n";
 	else std::cerr << "An error occcured while trying to create renderer: " << SDL_GetError << "\n";
 
+
 	GAME_STATE = MENU;
 
 	menu = new Menu();
+	menu->loadAsset(renderer);
 	board = new Board();
+	configScreen = ConfigScreen();
 	isRunning = true;
+}
+
+void Game::setGameControl(int x, int y) {
+	std::cerr << "Setting control, DAS = " << x << ", REPEAT_RATE = " << y << "\n";
+	DELAYED_AUTO_SHIFT = x;
+	REPEAT_RATE = y;
 }
 
 void Game::HandleEvents() {
 	SDL_Event event;
-	while(SDL_PollEvent(&event)){
+	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT) {
 			isRunning = false;
 		}
@@ -82,16 +91,19 @@ void Game::Update() {
 	}
 	else if (GAME_STATE == INGAME) {
 		// Handle game
+
+		if (board->state != NORMAL) return;
+
 		if (isRightHeld) {
 			if (now - rightPressed > DELAYED_AUTO_SHIFT) {
-				int p = (now - rightPressed) % REPEAT_RATE;
+				int p = (now - rightPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
 				if (p == 0) board->moveRight();
 			}
 		}
 
 		if (isLeftHeld) {
 			if (now - leftPressed > DELAYED_AUTO_SHIFT) {
-				int p = (now - leftPressed) % REPEAT_RATE;
+				int p = (now - leftPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
 				if (p == 0) board->moveLeft();
 			}
 		}
@@ -104,7 +116,7 @@ void Game::Update() {
 	else if (GAME_STATE == CONFIG) {
 		// Handle config
 	}
-	
+
 
 }
 
@@ -120,6 +132,7 @@ void Game::Render() {
 	}
 	else if (GAME_STATE == CONFIG) {
 		// Render config
+		configScreen.Render(renderer);
 	}
 
 	SDL_RenderPresent(renderer);

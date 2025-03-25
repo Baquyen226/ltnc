@@ -1,9 +1,9 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #include "board.h"
-#include "queue.h"
 #include "pieces.h"
 #include "sfx.h"
 
@@ -19,7 +19,7 @@ struct PreviousPieceState {
     }
 
     void save(int _id, int _x, int _y, int _rotation) {
-		id = _id;
+        id = _id;
         x = _x;
         y = _y;
         rotation = _rotation;
@@ -35,7 +35,27 @@ Board::Board() {
     queue->generateNewBag();
     queue->previewQueueUpdate();
     currentPiece->generateNewPiece(queue, -1);
-	clearBoard();
+    clearBoard();
+
+    std::ifstream file("config.txt");
+    if (!file.is_open()) return;
+
+    file.close();
+}
+
+
+void Board::loadAsset(SDL_Renderer* renderer) {
+    state_box.loadFont("asset/font/8-bit.ttf", 40);
+    MENU_BUTTON = Button("Menu", "asset/sprite/button.png", renderer);
+    RETRY_BUTTON = Button("Menu", "asset/sprite/button.png", renderer);
+    std::string BG1 = "asset/picture/BG-01.jpg";
+    std::string BG2 = "asset/picture/BG-02.jpg";
+    std::string BG3 = "asset/picture/BG-03.jpg";
+    std::string BG4 = "asset/picture/BG-04.jpg";
+    BG = {Background(BG1, renderer),
+          Background(BG2, renderer),
+          Background(BG3, renderer),
+          Background(BG4, renderer)};
 }
 
 void Board::Clean() {
@@ -48,15 +68,15 @@ void Board::Clean() {
 }
 
 int** Board::getPlayingField() {
-	return reinterpret_cast<int**>(pBoard);
+    return reinterpret_cast<int**>(pBoard);
 }
 
 void Board::clearBoard() {
-	for (int i = 0; i < BOARD_HEIGHT; i++) {
-		for (int j = 0; j < BOARD_WIDTH; j++) {
-			pBoard[i][j] = { 0 };
-		}
-	}
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            pBoard[i][j] = { 0 };
+        }
+    }
 }
 
 void Board::printBoard() {
@@ -102,39 +122,57 @@ void Board::getRenderColor(SDL_Renderer* renderer, int piece_id) {
 }
 
 void Board::Render(SDL_Renderer* renderer) {
+    //render bg first
+    if (state == NORMAL) {
+        for (auto& bg : BG) bg.Update(SDL_GetTicks());
+    }
+    if (stats.level >= 20) BG[3].Render(renderer);
+    else if (stats.level >= 14) BG[2].Render(renderer);
+    else if (stats.level >= 6) BG[1].Render(renderer);
+    else BG[0].Render(renderer);
+
+
+    //render a low opacity black filler(bg gets too bright)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 120);
+    SDL_FRect rect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+
     //render hold piece
-	PieceType holdPieceID = (PieceType)holdPiece;
-	SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderRect(renderer, &holdPieceContainer);
+    PieceType holdPieceID = (PieceType)holdPiece;
+    SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderRect(renderer, &holdPieceContainer);
 
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderFillRect(renderer, &holdPieceContainer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &holdPieceContainer);
 
-	int size = (holdPieceID == I_PIECE) ? 4 : 3;
+    int size = (holdPieceID == I_PIECE) ? 4 : 3;
 
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; j++) {
-			if (Piece_Shape[holdPieceID][0][i][j] != 0) {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (Piece_Shape[holdPieceID][0][i][j] != 0) {
                 //Pieces that has block at the first row on spawn state: S, Z, T
                 bool firstRowOccupied = (holdPieceID == S_PIECE || holdPieceID == Z_PIECE || holdPieceID == T_PIECE);
                 //Pieces (except I piece) that has the first column occupied
                 bool firstColumnOccupied = !(holdPieceID == I_PIECE || holdPieceID == O_PIECE);
 
                 int cellSize_posX = HOLD_PIECE_OFFSET_X + firstColumnOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * j + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
-                    cellSize_posY = HOLD_PIECE_OFFSET_Y + firstRowOccupied * CELL_SIZE    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * i;
+                    cellSize_posY = HOLD_PIECE_OFFSET_Y + firstRowOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * i;
 
-				SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
+                SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
 
-				getRenderColor(renderer, holdPieceID + 1);
-				SDL_RenderFillRect(renderer, &cell);
+                getRenderColor(renderer, holdPieceID + 1);
+                SDL_RenderFillRect(renderer, &cell);
 
-				SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
-				SDL_RenderRect(renderer, &cell);
-			}
-		}
-	}
-	SDL_FRect holdPieceCell = { HOLD_PIECE_OFFSET_X + CELL_SIZE, HOLD_PIECE_OFFSET_Y + CELL_SIZE, CELL_SIZE, CELL_SIZE };
+                SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+                SDL_RenderRect(renderer, &cell);
+            }
+        }
+    }
+    SDL_FRect holdPieceCell = { HOLD_PIECE_OFFSET_X + CELL_SIZE, HOLD_PIECE_OFFSET_Y + CELL_SIZE, CELL_SIZE, CELL_SIZE };
 
     //render the last 2 lines without the board grid(otherwise the piece would just look weird)
     for (int i = 0; i < 2; i++) {
@@ -212,6 +250,42 @@ void Board::Render(SDL_Renderer* renderer) {
     //other stuff
     queue->Render(renderer);
     stats.Render(renderer);
+
+    //render in-game button if state is not normal
+    if (state != NORMAL) {
+        //Render box
+        Uint8 r, g, b, a;
+        SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+
+        std::string s = (state == PAUSED) ? "Paused" : "Game Over";
+
+        SDL_Color COLOR_WHITE = { 255, 255, 255, 255 };
+        state_box.loadTextToTexture(s, COLOR_WHITE, renderer);
+
+        float x = TEXT_GAMEOVER_POSX_CENTER - state_box.get_width() / 2;
+        float y = TEXT_GAMEOVER_POSX_CENTER - state_box.get_height() / 2;
+        float w = state_box.get_width() + 50;
+        float h = state_box.get_height() + 50;
+
+        SDL_FRect placeholder = { x - 20, y - 20, w, h };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderFillRect(renderer, &placeholder);
+
+        state_box.Render(x, y, renderer, 0);
+
+        //Render buttons
+        y = y - 90;
+        SDL_FRect dest = { x, y, BUTTON_SPRITE_SIZE, BUTTON_SPRITE_SIZE };
+        SDL_FRect src = { BUTTON_SPRITE_FACTOR * MENU_BUTTON_X, BUTTON_SPRITE_FACTOR * MENU_BUTTON_Y, 16, 16 };
+        MENU_BUTTON.Render(renderer, &src, &dest);
+
+        x = x + state_box.get_width() - 30;
+        dest = { x, y, BUTTON_SPRITE_SIZE, BUTTON_SPRITE_SIZE };
+        src = { BUTTON_SPRITE_FACTOR * RETRY_BUTTON_X, BUTTON_SPRITE_FACTOR * RETRY_BUTTON_Y, 16, 16 };
+        RETRY_BUTTON.Render(renderer, &src, &dest);
+
+        SDL_SetRenderDrawColor(renderer, r, g, b, a);
+    }
 }
 
 
@@ -224,7 +298,7 @@ bool Board::canMove(int newX, int newY, int newRotation) {
         for (int j = 0; j < 4; j++) {
             if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {
                 int boardX = newX + j;
-                int boardY = newY + i;  
+                int boardY = newY + i;
 
                 if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
                     //std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
@@ -238,15 +312,15 @@ bool Board::canMove(int newX, int newY, int newRotation) {
             }
         }
     }
-    return true; 
+    return true;
 }
 
 bool Board::tryRotation(int newRotation, int direction) {
     for (int i = 0; i < 5; ++i) {
         int offsetX = 0, offsetY = 0;
         //0(currentRotation)->1(newRotation) uses index 0 when referencing the kick table when rotating clockwise              
-		//1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
-		//therefore CW uses currenRotation, CCW uses newRotation, except its multiplied by -1(direction)
+        //1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
+        //therefore CW uses currenRotation, CCW uses newRotation, except its multiplied by -1(direction)
 
         switch (currentPiece->pieceID) {
         case O_PIECE:
@@ -291,7 +365,7 @@ bool Board::tryRotation(int newRotation, int direction) {
 
 
 bool Board::movePiece(MovementType moveType) {
-    if (!currentPiece || currentPiece->isLocked || isGameOver) {
+    if (!currentPiece || currentPiece->isLocked) {
         return false;
     }
 
@@ -345,7 +419,7 @@ bool Board::movePiece(MovementType moveType) {
         currentPiece->isLocked = true;
         moved = true;
         break;
-       }
+    }
     case FALSE_HARD_DROP:
         int fy = currentPiece->y;
         while (canMove(currentPiece->x, fy + 1, currentPiece->rotation)) {
@@ -355,7 +429,7 @@ bool Board::movePiece(MovementType moveType) {
         break;
     }
 
-    
+
     putBlockInPlace();
     return moved;
 }
@@ -365,11 +439,11 @@ void Board::deleteOldBlock() {
 
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            int id          = lastPieceState.id;
-            int boardX      = lastPieceState.x + j;
-            int boardY      = lastPieceState.y + i;
-            int rotation    = lastPieceState.rotation;
-            
+            int id = lastPieceState.id;
+            int boardX = lastPieceState.x + j;
+            int boardY = lastPieceState.y + i;
+            int rotation = lastPieceState.rotation;
+
             if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
                 continue; // Skip invalid positions
             }
@@ -387,7 +461,7 @@ void Board::putBlockInPlace() {
         return;
     }
 
-	int size = currentPiece->getPieceSize();
+    int size = currentPiece->getPieceSize();
 
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -412,7 +486,7 @@ int Board::checkForLineClear() {
                 isFullLine = false;
                 break;
             }
-        } 
+        }
 
         if (isFullLine) {
             //std::cout << "Line clear detected at line#" << i << "\n";
@@ -442,17 +516,17 @@ int Board::checkForLineClear() {
 
 void Board::GameOver() {
     std::cout << "Game over\n";
-    isGameOver = true;
+    state = GAMEOVER;
     std::string death = "asset/sound/death.wav";
     sfx.playSound(death, GAME_EVENT);
 }
 
 void Board::boardUpdate() {
-    if (isGameOver) return;
+    if (state != NORMAL) return;
 
     // Handle locked pieces
     if (currentPiece->isLocked) {
-		isHoldUsed = false;
+        isHoldUsed = false;
         int clears = checkForLineClear();
         currentPiece->generateNewPiece(queue, -1);
         if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) {
@@ -474,18 +548,25 @@ void Board::boardUpdate() {
     movePiece(FALSE_HARD_DROP);
 }
 
+void Board::Reset() {
+    clearBoard();
+    holdPiece = -1;
+    queue->Reset();
+    stats.Reset();
+    currentPiece->generateNewPiece(queue, -1);
 
-bool Board::isGameGoing() {
-    return !isGameOver;
+    std::cerr << "Game restarted!\n";
+    state = NORMAL;
 }
 
+std::string move = "asset/sound/move.wav";
 //i literally cannot remove this without something going wrong
 void Board::moveRight() {
-    movePiece(MOVE_RIGHT);
+    if(movePiece(MOVE_RIGHT)) sfx.playSound(move, PIECE_MOVING);
 }
 
 void Board::moveLeft() {
-    movePiece(MOVE_LEFT);
+    if(movePiece(MOVE_LEFT)) sfx.playSound(move, PIECE_MOVING);
 }
 
 void Board::Rotate() {
@@ -509,20 +590,21 @@ void Board::SoftDrop() {
 }
 
 std::string hold = "asset/sound/hold.wav";
-void Board::HoldPiece() {
-	if (isHoldUsed) return;
 
-	lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+void Board::HoldPiece() {
+    if (isHoldUsed) return;
+
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
     deleteOldBlock();
-	if (holdPiece == -1) {
-		holdPiece = currentPiece->pieceID;
-		currentPiece->generateNewPiece(queue, -1);
-	}
-	else {
-		int temp = holdPiece;
-		holdPiece = currentPiece->pieceID;
-		currentPiece->generateNewPiece(queue, temp);
-	}
+    if (holdPiece == -1) {
+        holdPiece = currentPiece->pieceID;
+        currentPiece->generateNewPiece(queue, -1);
+    }
+    else {
+        int temp = holdPiece;
+        holdPiece = currentPiece->pieceID;
+        currentPiece->generateNewPiece(queue, temp);
+    }
     sfx.playSound(hold, PIECE_ROTATE);
-	isHoldUsed = true;
+    isHoldUsed = true;
 }

@@ -78,6 +78,13 @@ int Queue::getNextPiece() {
     return nextPiece;
 }
 
+void Queue::Reset() {
+    previewQueue.clear();
+    pieceQueue.clear();
+    generateNewBag();
+    previewQueueUpdate();
+}
+
 void Queue::Render(SDL_Renderer* renderer) {
     const int OFFSET_Y = 100;
 

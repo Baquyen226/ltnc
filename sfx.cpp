@@ -39,12 +39,12 @@ bool SFX::playSound(std::string& path, int priority = 4) {
 
 			for (int i = priority; i <= 4; i++) {
 				oldest = Mix_GroupOldest(i);
-				std::cerr << "Checking priority " << i << ", oldest: " << oldest << "\n";
+				//std::cerr << "Checking priority " << i << ", oldest: " << oldest << "\n";
 				if (oldest != -1) break;
 			}
 
 			if (oldest != -1) {
-				std::cerr << "Halting channel: " << oldest << "\n";
+				//std::cerr << "Halting channel: " << oldest << "\n";
 				Mix_HaltChannel(oldest);
 				channel = Mix_PlayChannel(-1, sound, 0); // Retry playing sound
 				if (channel != -1) Mix_GroupChannel(channel, priority); // Reassign priority
@@ -55,7 +55,7 @@ bool SFX::playSound(std::string& path, int priority = 4) {
 			std::cerr << "No available channel for sound: " << path << "\n";
 			Mix_FreeChunk(sound);
 		}
-		else std::cerr << "Sound " << path << " played on channel " << channel << "\n";
+		//else std::cerr << "Sound " << path << " played on channel " << channel << "\n";
 	}
 	return true;
 }

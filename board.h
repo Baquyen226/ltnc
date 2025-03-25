@@ -10,6 +10,8 @@
 #include "tetromino.h"
 #include "stats.h"
 #include "texture.h"
+#include "UI.h"
+#include "background.h"
 
 //Movement stuff
 enum MovementType {
@@ -23,12 +25,21 @@ enum MovementType {
 	FALSE_HARD_DROP //for ghost piece
 };
 
+enum BoardState {
+	NORMAL,
+	PAUSED, 
+	GAMEOVER
+};
 
 class Board {
 public:
 	GameStats	stats;
+	BoardState	state = NORMAL;
+	Button MENU_BUTTON, RETRY_BUTTON;
+	std::vector<Background> BG;
 
 	Board();
+	void    loadAsset(SDL_Renderer* renderer);
 	void	Clean();
 	int**	getPlayingField();
 	void	clearBoard();
@@ -44,14 +55,14 @@ public:
 	int		checkForLineClear();
 	void	boardUpdate();
 	void	GameOver();
-	bool	isGameGoing();
+	void	Reset();
 
 	//:(
 	void	moveRight();
 	void	moveLeft();
 	void	Rotate();
 	void	ReversedRotate();
-	void	Rotate180();	
+	void	Rotate180();
 	void	HardDrop();
 	void	SoftDrop();
 
@@ -59,15 +70,14 @@ public:
 	void	HoldPiece();
 private:
 	int			pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
-	int			fTimer	;
-	int			level	;
-	bool		isGameOver = false;
-
+	int			fTimer;
+	int			level;
 	int 		holdPiece = -1;
 	bool		isHoldUsed = false;
 
-	Queue*		queue = NULL;
+	Queue* queue = NULL;
 	Tetromino* currentPiece = NULL;
+	TextureManager state_box;
 };
 
 

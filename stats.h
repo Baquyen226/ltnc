@@ -17,6 +17,7 @@ struct GameStats {
     TTF_Font* font = NULL;
 
     GameStats();
+    void Reset();
 
     void addPoints(int clearedLines);
     void addLines(int clearedlines);

@@ -24,15 +24,11 @@ void TextureManager::Clear() {
 //Handles texts
 
 bool TextureManager::loadFont(const std::string& path, int fontSize) {
-    std::cerr << "Attempting to open font at: " << path << std::endl;
+    //std::cerr << "Attempting to open font at: " << path << std::endl;
     cFont = TTF_OpenFont(path.c_str(), fontSize);
     if (!cFont) {
-        std::cerr << "Failed to load font! TTF_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Failed to load font! TTF_Error: " << SDL_GetError() << "\n";
         return false;
-    }
-    else {
-        std::cerr << "Font loaded successfully!" << std::endl;
-        return true;
     }
     return true;
 }
@@ -43,7 +39,7 @@ bool TextureManager::loadTextToTexture(const std::string& text, SDL_Color color,
     size_t len = text.length();
     SDL_Surface* textSurface = TTF_RenderText_Solid(cFont, text.c_str(), len, color);
     if (!textSurface) {
-        std::cerr << "Unable to render text surface! TTF_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Unable to render text surface! TTF_Error: " << SDL_GetError() << "\n";
         return false;
     }
 
@@ -54,7 +50,7 @@ bool TextureManager::loadTextToTexture(const std::string& text, SDL_Color color,
     SDL_DestroySurface(textSurface);
 
     if (!texture) {
-        std::cerr << "Unable to create texture from rendered text! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Unable to create texture from rendered text! SDL_Error: " << SDL_GetError() << "\n";
         return false;
     }
 
@@ -67,7 +63,10 @@ bool TextureManager::loadFromFile(std::string path, SDL_Renderer* renderer) {
     Clear(); // Free old texture
 
     SDL_Surface* loadedSurface = IMG_Load(path.c_str());
-    if (!loadedSurface) return false;
+    if (!loadedSurface) {
+        std::cerr << "Unable to create texture from image! IMG_Error:" << SDL_GetError() << "\n";
+        return false;
+    }
 
     texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
     w = loadedSurface->w;
@@ -85,4 +84,10 @@ void TextureManager::Render(int x, int y, SDL_Renderer* renderer, SDL_FRect* cli
         dest.h = clip->h;
     }
     SDL_RenderTexture(renderer, texture, clip, &dest);
+}
+
+
+void TextureManager::PartialRender(SDL_Renderer* renderer, SDL_FRect* src, SDL_FRect* clip) {
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+    SDL_RenderTexture(renderer, texture, src, clip);
 }

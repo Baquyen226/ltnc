@@ -7,19 +7,14 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+///Renders text or images
+///TextureManager() - Constructor
+///Clear() - Clears the texture
+///loadFont() - Loads a font
+///loadTextToTexture() - Loads text to texture(MUST LOAD FONT FIRST)
+///loadFromFile() - Loads image from file
+///Render() - Renders the texture
 class TextureManager {
-	///<summary>
-	///Renders text or images
-	/// </summary>
-	/// <remarks>
-	///\n TextureManager() - Constructor
-	///\n Clear() - Clears the texture
-	///\n loadFont() - Loads a font
-	///\n loadTextToTexture() - Loads text to texture(MUST LOAD FONT FIRST)
-	///\n loadFromFile() - Loads image from file
-	///\n Render() - Renders the texture
-	/// </remarks>
-	//didnt work >:-(
 public:
 	TextureManager();
 	void Clear();
@@ -27,6 +22,7 @@ public:
 	bool loadTextToTexture(const std::string& text, SDL_Color color, SDL_Renderer* renderer);
 	bool loadFromFile(std::string path, SDL_Renderer* renderer);
 	void Render(int x, int y, SDL_Renderer* renderer, SDL_FRect* clip);
+	void PartialRender(SDL_Renderer* renderer, SDL_FRect* src, SDL_FRect* clip);
 
 	//literally no point in using class sgiosfkjhgodfijh
 	int get_posX() { return x; }
