@@ -1,4 +1,5 @@
 #include "ConfigScreen.h"
+#include "sfx.h"
 #include <fstream>
 #include <sstream>
 
@@ -11,7 +12,7 @@ ConfigScreen::ConfigScreen(){
     tmp = "Repeat Rate(lower = faster)";
     RepeatRate = Slider(tmp, 50, 150, 1.0f, 300.0f, 22.0f);
     RepeatRate_T = Text(tmp, 50, 130, 20),
-    tmp = "Volume(does nothing yet...)";
+    tmp = "Volume";
     Volume = Slider(tmp, 50, 200, 0.0f, 100.0f, 50.0f);
     Volume_T = Text(tmp, 50, 180, 20);
     loadConfig();
@@ -38,7 +39,7 @@ void ConfigScreen::handleEvents(SDL_Event& event) {
     }
 }
 
-// Load config from file
+// Load config from file when opening config screen
 void ConfigScreen::loadConfig() {
     std::ifstream file("config.txt");
     if (!file.is_open()) return;
@@ -65,5 +66,6 @@ void ConfigScreen::saveConfig() {
         << RepeatRate.getValue() << " "
         << Volume.getValue() << " ";
 
+    sfx.setVolume(Volume.getValue());
     file.close();
 }

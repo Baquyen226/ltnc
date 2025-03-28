@@ -22,11 +22,7 @@ void Game::Init() {
 	initialized = Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG);
 	if (initialized) std::cerr << "SDL_Mixer Initialized!" << "\n";
 	else std::cerr << "Failed to initialize SDL_Mixer: " << SDL_GetError << "\n";
-
-	int channel = Mix_AllocateChannels(32);
-	std::cerr << channel << " channels allocated\n";
-	std::cerr << "Actual allocated channels: " << Mix_AllocateChannels(-1) << "\n";
-
+	
 	SDL_AudioSpec spec;
 	spec.freq = MIX_DEFAULT_FREQUENCY;
 	spec.format = MIX_DEFAULT_FORMAT;
@@ -36,7 +32,6 @@ void Game::Init() {
 		std::cerr << "Failed to open audio: " << SDL_GetError() << "\n";
 		return;
 	}
-
 
 	window = SDL_CreateWindow(WINDOW_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 	if (window != NULL) std::cerr << "Window created!" << "\n";
@@ -53,11 +48,12 @@ void Game::Init() {
 	menu->loadAsset(renderer);
 	board = new Board();
 	configScreen = ConfigScreen();
+	configScreen.saveConfig();
 	isRunning = true;
 }
 
 void Game::setGameControl(int x, int y) {
-	std::cerr << "Setting control, DAS = " << x << ", REPEAT_RATE = " << y << "\n";
+	//std::cerr << "Setting control, DAS = " << x << ", REPEAT_RATE = " << y << "\n";
 	DELAYED_AUTO_SHIFT = x;
 	REPEAT_RATE = y;
 }

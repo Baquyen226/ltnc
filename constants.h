@@ -65,4 +65,7 @@ const int BUTTON_SPRITE_SIZE			= 48;
 const int DEFAULT_DELAYED_AUTO_SHIFT = 150; //~10f equivalent
 const int DEFAULT_REPEAT_RATE = 22;
 
+//other stuff
+const int CHANNEL_COUNT = 8;
+
 #endif

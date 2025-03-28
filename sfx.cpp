@@ -74,4 +74,11 @@ void SFX::stopSound() {
 	}
 }
 
+void SFX::setVolume(int v) {
+	float _v = MIX_MAX_VOLUME / 100 * (float)v;
+	for (int i = 0; i < CHANNEL_COUNT; i++) {
+		Mix_Volume(i, _v);
+	}
+}
+
 SFX sfx;
