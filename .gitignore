@@ -1,0 +1,6 @@
+rhythm g.c081c53e/
+SDL/
+x64/
+rhythm game tests.*
+*.dll
+.vs/
