@@ -9,7 +9,7 @@ bool TetrisChallenge::enter(Game& game, SDL_Renderer* renderer) {
 
 bool TetrisChallenge::exit() {
 	delete board;
-	board = NULL;
+	board = nullptr;
 	return true;
 }
 
@@ -99,7 +99,7 @@ void TetrisChallenge::render(Game& game, SDL_Renderer* renderer) {
 }
 
 void TetrisChallenge::setAlpha(Uint8 a) {
-	if (board == NULL) return;
+	if (board == nullptr) return;
 	board->setAlpha(a);
 	alpha = a;
 }

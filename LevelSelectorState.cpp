@@ -31,7 +31,7 @@ bool LevelSelectorState::enter(Game& game, SDL_Renderer* renderer) {
 bool LevelSelectorState::exit() {
 	levelEntries.clear();
 	if (mapDataLoader) delete mapDataLoader;
-	mapDataLoader = NULL;
+	mapDataLoader = nullptr;
 	for (auto& entry : levelEntries) {
 		delete entry;
 	}

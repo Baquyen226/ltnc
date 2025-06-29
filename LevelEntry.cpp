@@ -11,7 +11,7 @@ LevelEntry::LevelEntry(MapData mapdata, Game& game) {
 	SDL_SetSurfaceAlphaMod(surface, alpha);
 
 	TTF_Font* font = TTF_OpenFont("assets/fonts/8-bit.ttf", 24);
-	if (font == NULL) {
+	if (font == nullptr) {
 		std::cerr << "Failed to load font: " << SDL_GetError() << "\n";
 		return;
 	}
@@ -20,44 +20,44 @@ LevelEntry::LevelEntry(MapData mapdata, Game& game) {
 	SDL_Color color = { 255, 255, 255, alpha };
 	// Map name(Row 1)
 	SDL_Surface* levelNameSurface = TTF_RenderText_Solid(font, mapdata.mapName.c_str(), mapdata.mapName.length(), color);
-	if (levelNameSurface == NULL) {
+	if (levelNameSurface == nullptr) {
 		std::cerr << "Failed to level name surface: " << SDL_GetError() << "\n";
 		return;
 	}
 	SDL_Rect levelNameRect = { THUMBNAIL_SIZE_X + 12 /*100(thumbnail) + 12(half font)*/, 12, levelNameSurface->w, 24};
-	SDL_BlitSurface(levelNameSurface, NULL, surface, &levelNameRect);
+	SDL_BlitSurface(levelNameSurface, nullptr, surface, &levelNameRect);
 	SDL_DestroySurface(levelNameSurface);
 
 	// artist name(Row 2)
 	SDL_Surface* artistSurface = TTF_RenderText_Solid(font, mapdata.artist.c_str(), mapdata.artist.length(), color);
-	if (artistSurface == NULL) {
+	if (artistSurface == nullptr) {
 		std::cerr << "Failed to artist name surface: " << SDL_GetError() << "\n";
 		return;
 	}
 	SDL_Rect artistNameRect = { THUMBNAIL_SIZE_X + 12 /*100(thumbnail) + 12(half font)*/, 36, artistSurface->w, 24 };
-	SDL_BlitSurface(artistSurface, NULL, surface, &artistNameRect);
+	SDL_BlitSurface(artistSurface, nullptr, surface, &artistNameRect);
 	SDL_DestroySurface(artistSurface);
 
 	// duration(Row 3)
 	std::string durationText = std::to_string(mapdata.duration / 1000) + "s";
 	SDL_Surface* durationSurface = TTF_RenderText_Solid(font, durationText.c_str(), durationText.length(), color);
-	if (durationSurface == NULL) {
+	if (durationSurface == nullptr) {
 		std::cerr << "Failed to duration surface: " << SDL_GetError() << "\n";
 		return;
 	}
 	SDL_Rect durationRect = { THUMBNAIL_SIZE_X + 12 /*100(thumbnail) + 12(half font)*/, 60, durationSurface->w, 24 };
-	SDL_BlitSurface(durationSurface, NULL, surface, &durationRect);
+	SDL_BlitSurface(durationSurface, nullptr, surface, &durationRect);
 	SDL_DestroySurface(durationSurface);
 
 	// rating (at the end of the box)
 	std::string ratingText = "Difficulty: " + std::to_string(mapdata.rating);
 	SDL_Surface* ratingSurface = TTF_RenderText_Solid(font, ratingText.c_str(), ratingText.length(), color);
-	if (ratingSurface == NULL) {
+	if (ratingSurface == nullptr) {
 		std::cerr << "Failed to rating surface: " << SDL_GetError() << "\n";
 		return;
 	}
 	SDL_Rect ratingRect = { THUMBNAIL_SIZE_X + 12, INDIVIDUAL_MAP_H - 36, ratingSurface->w, 24 };
-	SDL_BlitSurface(ratingSurface, NULL, surface, &ratingRect);
+	SDL_BlitSurface(ratingSurface, nullptr, surface, &ratingRect);
 	SDL_DestroySurface(ratingSurface);
 
 
@@ -65,18 +65,18 @@ LevelEntry::LevelEntry(MapData mapdata, Game& game) {
 	std::string filePath;
 	filePath = mapdata.directoryName + mapdata.thumbnailFilePath;
 	SDL_Surface* thumbnail = IMG_Load(filePath.c_str());
-	if (thumbnail == NULL) {
+	if (thumbnail == nullptr) {
 		std::cerr << "Failed to load thumbnail: " << SDL_GetError() << "\n" << "Rolling back to default thumbnail\n";
 		filePath = "assets/images/nothumbnail.jpg";
 		thumbnail = IMG_Load(filePath.c_str());
 	}
 
-	if (thumbnail == NULL) {
+	if (thumbnail == nullptr) {
 		std::cerr << "Failed to load thumbnail: " << SDL_GetError << "\n";
 		return;
 	}
 	SDL_Rect thumbnailRect = { 0, 0, THUMBNAIL_SIZE_X, THUMBNAIL_SIZE_Y };
-	SDL_BlitSurface(thumbnail, NULL, surface, &thumbnailRect);
+	SDL_BlitSurface(thumbnail, nullptr, surface, &thumbnailRect);
 	SDL_DestroySurface(thumbnail);
 
 	
@@ -85,14 +85,14 @@ LevelEntry::LevelEntry(MapData mapdata, Game& game) {
 
 LevelEntry::~LevelEntry() {
 	SDL_DestroyTexture(texture);
-	texture = NULL;
+	texture = nullptr;
 }
 
 void LevelEntry::Render(Game& game, SDL_Renderer* renderer, int x, int y) {
 	if (texture) {
 		SDL_FRect dstRect = { x, y, INDIVIDUAL_MAP_W, INDIVIDUAL_MAP_H }; // size of the entry
 		setPosition(x, y);
-		SDL_RenderTexture(renderer, texture, NULL, &dstRect);
+		SDL_RenderTexture(renderer, texture, nullptr, &dstRect);
 	}
 }
 

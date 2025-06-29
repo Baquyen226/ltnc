@@ -2,8 +2,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 #include <iostream>
+#include <SDL.h>
 
-static const char* TITLE = "My test";
+static const char* TITLE = "rhythm game test";
 const int SCREEN_WIDTH = 1300;
 const int SCREEN_HEIGHT = 900;
 
@@ -54,6 +55,7 @@ const int INITIAL_PIECE_POSITION_X = 3;
 const int INITIAL_PIECE_POSITION_Y = 1;
 const int INITIAL_ROTATION_STATE = 0;
 const int BASE_GRAVITY = 90;
+const int MAX_PIECE_LOCK_FRAMES = 30; // Number of frames before a piece locks in place
 
 // Map data loader constants
 const std::string MAP_FOLDER_PATH = "assets/beatmap";
@@ -89,4 +91,16 @@ const Uint32 THUMBNAIL_SIZE_Y = 176;
 //[Events]
 //some things
 
+//Game setting constants
+const Uint8 DEFAULT_DAS = 130;
+const Uint8 DEFAULT_ARR = 30;
+const int SLIDER_WIDTH  = 600;
+const int SLIDER_HEIGHT = 40;
+const int DAS_SLIDER_X = 200;
+const int DAS_SLIDER_Y = 300;
+const int ARR_SLIDER_X = 200;
+const int ARR_SLIDER_Y = 400;
+
+// ffmpeg constants
+const int MAX_FRAME_BUFFER_SIZE = 15; // Maximum number of frames to buffer
 #endif

@@ -1,5 +1,2 @@
-# Tetris Rhythm Game
-
-## Note
-
-Project game YetAnotherTetris đã nộp hiện đã được chuyển xuống branch 'legacy'
+##NOTE
+Game đã nộp đã chuyển sang branch legacy!!

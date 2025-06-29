@@ -3,7 +3,11 @@
 #define HELPERDATATYPE_H
 
 #include <vector>
-
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+}
 #include "texture.h"
 
 enum CurrentIngameState {
@@ -29,6 +33,7 @@ struct MapData {
 	// Should be 500x300px. If not it will be cropped, not the best idea but meh
 	// If not set, a default thumbnail will be used
 	std::string thumbnailFilePath;
+	std::string videoFilePath = ""; // Optional, can be empty
 	int duration;
 
 	int hp_drain_multiplier;
@@ -44,5 +49,10 @@ struct MapData {
 enum EventType {
 	LEVEL_CHANGE,
 	HP_DRAIN_RATE_CHANGE,
+};
+
+struct VideoFrame {
+	AVFrame* frame;
+	int64_t pts;
 };
 #endif

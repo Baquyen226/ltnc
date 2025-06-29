@@ -28,19 +28,19 @@ Game::Game() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	isRunning = true;
-	switchState(new MenuState, renderer);
+	switchState(new GameSettingState, renderer);
 	stats = new IngameStats();
 }
 
 Game::~Game() {
 	SDL_DestroyRenderer(renderer);
-	renderer = NULL;
+	renderer = nullptr;
 	SDL_DestroyWindow(window);
-	window = NULL;
+	window = nullptr;
 	if (currentState) delete currentState;
-	currentState = NULL;
+	currentState = nullptr;
 	if (stats) delete stats;
-	stats = NULL;
+	stats = nullptr;
 	Mix_CloseAudio();
 	TTF_Quit();
 	SDL_Quit();

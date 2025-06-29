@@ -4,6 +4,16 @@
 #include "HelperDataType.h"
 
 Uint64 elapsed = 0;
+
+void drawBlackLowOpacityRect(SDL_Renderer* renderer, int x, int y, int w, int h, float alpha) {
+    Uint8 _r, _g, _b, _a;
+	SDL_GetRenderDrawColor(renderer, &_r, &_g, &_b, &_a);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, (Uint8)alpha);
+	SDL_FRect rect = { (float)x, (float)y, (float)w, (float)h };
+	SDL_RenderFillRect(renderer, &rect);
+	SDL_SetRenderDrawColor(renderer, _r, _g, _b, _a);
+}
+
 bool IngameState::enter(Game& game, SDL_Renderer* renderer) {
     TetrisPart = new TetrisChallenge;
     RhythmPart = new RhythmChallenge;
@@ -24,6 +34,7 @@ bool IngameState::enter(Game& game, SDL_Renderer* renderer) {
 	// Initialize GameOverTimestamp
 	GameOverTimestamp = 0;
 	elapsed = 0;
+	startTime = SDL_GetTicks(); // Initialize start time
 
 	return TetrisPart->enter(game, renderer) && RhythmPart->enter(game, renderer);
 }
@@ -41,8 +52,14 @@ bool IngameState::enter(Game& game, SDL_Renderer* renderer, MapData* MAPDATA) {
 		std::cerr << "Failed to initialize Ingame State.\n";
         return false;
     }
-    //why is this not getting passed correctlynfsnhgfsipfshi
 
+    //init video
+    if (mapData->videoFilePath != ""){
+        std::string videoPath = mapData->directoryName + mapData->videoFilePath;
+        videoPlayer = new VideoPlayer(videoPath.c_str(), renderer);
+    }
+
+    //init tetris and rhythm
     if (!TetrisPart->enter(game, renderer) || !RhythmPart->enter(game, renderer, mapData)) {
         std::cerr << "Failed to enter Tetris or Rhythm part\n";
         return false;
@@ -77,16 +94,16 @@ void IngameState::update(Game& game, SDL_Renderer* renderer) {
 
     //Hacky fix so that setAlpha doesnt fricking get called after board was deleted)
     if (elapsed >= 1950) {
-        if (mapData == NULL) {
-            std::cerr << "MapData is null, rolling back to the default map\n";
+        if (mapData == nullptr) {
+            //std::cerr << "MapData is null, rolling back to the default map\n";
             game.switchState(new GameOverState, renderer);
             return;
         }
         else {
-            std::cerr << "MapData is not null, passing it to GameOverState\n";
+            //std::cerr << "MapData is not null, passing it to GameOverState\n";
             GameOverState* gameOverState = new GameOverState;
             MapData* m = mapData;
-            mapData = NULL;
+            mapData = nullptr;
             game.switchState(gameOverState, renderer);
             gameOverState->enter(game, renderer, m);
             return;
@@ -117,6 +134,9 @@ void IngameState::update(Game& game, SDL_Renderer* renderer) {
         return;
     }
 
+    if (videoPlayer != nullptr) {
+        if (videoPlayer->isPlaying()) videoPlayer->update();
+    }
     TetrisPart->update(game, renderer);
     RhythmPart->update(game, renderer);
 	game.getStats()->Update(0, renderer);
@@ -127,6 +147,10 @@ void IngameState::render(Game& game, SDL_Renderer* renderer)  {
     RhythmPart->setAlpha(globalAlpha);
     game.getStats()->setAlpha(globalAlpha);
 
+    if (videoPlayer != nullptr) {
+        videoPlayer->render();
+    }
+	drawBlackLowOpacityRect(renderer, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, globalAlpha * 0.4f);
     TetrisPart->render(game, renderer);
     RhythmPart->render(game, renderer);
     game.getStats()->Render(renderer);

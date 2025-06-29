@@ -55,12 +55,12 @@ void GameOverState::handleEvent(Game& game, SDL_Event& event) {
 		if (button->Clicked()) {
 			if (button->getText() == "Restart") {
 				if (mapData) {
-					std::cerr << "Restarting game with this map data:" << mapData->directoryName <<"\n";
+					//std::cerr << "Restarting game with this map data:" << mapData->directoryName <<"\n";
 					game.enterIngameStateWithMap(mapData); //mem leak les goo
 					return;
 				}
 				else {
-					std::cerr << "MapData is null, rolling back to the default map\n";
+					/*std::cerr << "MapData is null, rolling back to the default map\n";*/
 					game.switchState(new IngameState, game.getRenderer());
 					return;
 				}
@@ -69,7 +69,7 @@ void GameOverState::handleEvent(Game& game, SDL_Event& event) {
 				if (mapData) {
 					std::cerr << "Deleting mapData\n";
 					delete mapData;
-					mapData = NULL;
+					mapData = nullptr;
 				}
 				game.switchState(new MenuState, game.getRenderer());
 				return;

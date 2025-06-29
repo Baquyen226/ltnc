@@ -24,7 +24,7 @@ public:
 private:
 	Text GAME_OVER;
 	float alpha = 255.0f;
-	MapData* mapData = NULL;
+	MapData* mapData = nullptr;
 	std::vector<Button*> buttons;
 };
 

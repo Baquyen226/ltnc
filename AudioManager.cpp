@@ -1,8 +1,8 @@
 #include "AudioManager.h"
 
 AudioManager::AudioManager(){
-	music = NULL;
-	chunk = NULL;
+	music = nullptr;
+	chunk = nullptr;
 }
 
 AudioManager::~AudioManager() {
@@ -77,13 +77,13 @@ void AudioManager::playSound(int priority = 4) {
 void AudioManager::stopMusic() {
 	if (music) {
 		Mix_FreeMusic(music);
-		music = NULL;
+		music = nullptr;
 	}
 }
 
 void AudioManager::stopSound() {
 	if (chunk) {
 		Mix_FreeChunk(chunk);
-		chunk = NULL;
+		chunk = nullptr;
 	}
 }

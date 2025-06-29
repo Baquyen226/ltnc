@@ -37,9 +37,9 @@ TetrisBoard::TetrisBoard() {
 
 TetrisBoard::~TetrisBoard() {
     if (queue) delete queue;
-    queue = NULL;
+    queue = nullptr;
     if (currentPiece) delete currentPiece;
-    currentPiece = NULL;
+    currentPiece = nullptr;
 }
 
 
@@ -48,11 +48,11 @@ void TetrisBoard::loadAsset(SDL_Renderer* renderer) {
 }
 
 void TetrisBoard::Clean() {
-    if (queue != NULL && currentPiece != NULL) {
+    if (queue != nullptr && currentPiece != nullptr) {
         delete queue;
         delete currentPiece;
-        queue = NULL;
-        currentPiece = NULL;
+        queue = nullptr;
+        currentPiece = nullptr;
     }
 }
 
@@ -454,6 +454,9 @@ void TetrisBoard::GameOver() {
 
 void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
     if (state != NORMAL) return;
+	bool isOnGround = !canMove(currentPiece->x, currentPiece->y + 1, currentPiece->rotation);
+	if (isOnGround) { pieceLockfTimer++; }
+	else { pieceLockfTimer = 0; }
 
     // Handle locked pieces
     if (currentPiece->isLocked) {
@@ -468,7 +471,7 @@ void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
     else {
         if (fTimer >= game.getStats()->gravity) {
             fTimer = 0;
-            if (!movePiece(SOFT_DROP)) {
+            if (!movePiece(SOFT_DROP) && pieceLockfTimer >= MAX_PIECE_LOCK_FRAMES) {
                 currentPiece->isLocked = true;
             }
         }

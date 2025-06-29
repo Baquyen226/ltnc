@@ -10,6 +10,7 @@
 #include "HelperDataType.h"
 #include "TetrisChallenge.h"
 #include "RhythmChallenge.h"
+#include "VideoPlayer.h"
 
 class TetrisChallenge;
 class RhythmChallenge;
@@ -27,10 +28,12 @@ public:
 	//unique function
 	bool enter(Game& game, SDL_Renderer* renderer, MapData* _mapData);
 private:
-	TetrisChallenge* TetrisPart = NULL;
-	RhythmChallenge* RhythmPart = NULL;
+	TetrisChallenge* TetrisPart = nullptr;
+	RhythmChallenge* RhythmPart = nullptr;
+	VideoPlayer* videoPlayer = nullptr;
 	float globalAlpha = 255.0f;
-	Uint64 GameOverTimestamp;
-	MapData* mapData = NULL;
-};
+	Uint32 startTime = 0; // Time when the game started
+	Uint32 GameOverTimestamp;
+	MapData* mapData = nullptr;
+}; 
 #endif

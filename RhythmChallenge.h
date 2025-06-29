@@ -14,7 +14,7 @@ struct JudgementFeedback {
 	Uint64 startTime;
 	bool active;
 
-	JudgementFeedback() : textObject(NULL), startTime(0), active(false) {}
+	JudgementFeedback() : textObject(nullptr), startTime(0), active(false) {}
 };
 
 
@@ -50,8 +50,8 @@ private:
 	float HPDrainMultiplier = 1.0f;
 
 	//asset
-	AudioManager* harddrop = NULL;
-	AudioManager* song = NULL;
+	AudioManager* harddrop = nullptr;
+	AudioManager* song = nullptr;
 	JudgementFeedback object;
 	Text HP;
 	Text ACCURACY;

@@ -31,7 +31,7 @@ private:
 	bool isDownHeld = false;
 	float alpha = 255.0f;
 
-	TetrisBoard* board = NULL;
+	TetrisBoard* board = nullptr;
 	int DELAYED_AUTO_SHIFT = 90;
 	int REPEAT_RATE = 1;
 };

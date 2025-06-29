@@ -21,9 +21,9 @@ struct IngameStats {
     int			    points = 0;
     int			    line_clear_points_reward[4] = { 40, 120, 300, 1200 };
 	int             line_clear_health_reward[4] = { 1, 2, 4, 8 };
-    Text* pointsText = NULL;
-    Text* levelText = NULL; 
-    Text* linesText = NULL;
+    Text* pointsText = nullptr;
+    Text* levelText = nullptr; 
+    Text* linesText = nullptr;
 
     void addPoints(int clearedLines);
     void addLines(int clearedlines);

@@ -29,20 +29,26 @@ int judge(Uint64 offset) {
 }
 
 void UpdateHealthBar(float* currentHealth, float* targetHealth, float deltaHealth) {
-    if (*targetHealth > 100) {
-        *targetHealth = 100;
+	float tHealth = *targetHealth;
+	float cHealth = *currentHealth;
+
+    if (tHealth > 100) {
+        tHealth = 100;
     }
 
-    if (*targetHealth < 0) *targetHealth = 0;
+    if (tHealth < 0) tHealth = 0;
 
-    if (*currentHealth > *targetHealth) {
-        *currentHealth -= deltaHealth * (*currentHealth - *targetHealth);
-        if (*currentHealth < *targetHealth) *currentHealth = *targetHealth;
+    if (cHealth > tHealth) {
+        cHealth -= deltaHealth * (cHealth - tHealth);
+        if (cHealth < tHealth) cHealth = tHealth;
     }
-    else if (*currentHealth < *targetHealth) {
-        *currentHealth += deltaHealth * (*targetHealth - *currentHealth);
-        if (*currentHealth > *targetHealth) *currentHealth = *targetHealth;
+    else if (cHealth < tHealth) {
+        cHealth += deltaHealth * (tHealth - cHealth);
+        if (cHealth > tHealth) cHealth = tHealth;
     }
+
+	*targetHealth = tHealth;
+	*currentHealth = cHealth;
 }
 
 std::string RoundToTwoDecimalPlaces(float a) {
@@ -189,10 +195,10 @@ bool RhythmChallenge::enter(Game& game, SDL_Renderer* renderer, MapData* mapData
 bool RhythmChallenge::exit() {
     std::cout << "Exiting Ingame State\n";
     if (harddrop) delete harddrop;
-    harddrop = NULL;
+    harddrop = nullptr;
 
     if (song) delete song;
-    song = NULL;
+    song = nullptr;
     return true;
 }
 
@@ -206,7 +212,7 @@ void RhythmChallenge::handleEvent(Game& game, SDL_Event& event) {
             Uint64 currentTimestamp = SDL_GetTicks() - gameStart;
 
             // Find the closest note to hit
-            Note* closestNote = NULL;
+            Note* closestNote = nullptr;
             Uint64 closestDelta = UINT32_MAX;
 
             for (auto& note : notes) {

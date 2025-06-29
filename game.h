@@ -29,9 +29,9 @@ public:
 	void Exit() { isRunning = false; };
 private:
 	bool isRunning = false;
-	SDL_Renderer* renderer = NULL;
-	SDL_Window* window = NULL;
-	GameState* currentState = NULL;
-	IngameStats* stats = NULL;
+	SDL_Renderer* renderer = nullptr;
+	SDL_Window* window = nullptr;
+	GameState* currentState = nullptr;
+	IngameStats* stats = nullptr;
 };
 #endif

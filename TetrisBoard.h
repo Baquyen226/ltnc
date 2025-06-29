@@ -62,13 +62,14 @@ class TetrisBoard {
 	private:
 		int			pBoard[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 		int			fTimer;
+		int			pieceLockfTimer;
 		int			level;
 		int 		holdPiece = -1;
 		bool		isHoldUsed = false;
 		float		alpha = 255.0f;
 	
-		TetrisQueue* queue = NULL;
-		Tetromino* currentPiece = NULL;
+		TetrisQueue* queue = nullptr;
+		Tetromino* currentPiece = nullptr;
 };
 #endif // !TETRISCHALLENGE_H
 

@@ -3,7 +3,7 @@
 
 //texture class
 Texture::Texture() {
-	texture = NULL;
+	texture = nullptr;
 };
 
 Texture::~Texture() {
@@ -50,16 +50,16 @@ void Texture::PartialRender(SDL_Renderer* renderer, SDL_FRect* src, SDL_FRect* d
 //text class
 Text::Text() {
 	textColor = {};
-	font = NULL;
-	texture = NULL;
+	font = nullptr;
+	texture = nullptr;
 	text = "";
 }
 
 Text::~Text() {
 	TTF_CloseFont(font);
-	font = NULL;
+	font = nullptr;
 	SDL_DestroyTexture(texture);
-	texture = NULL;
+	texture = nullptr;
 }
 
 void Text::loadFont(std::string path, int size) {

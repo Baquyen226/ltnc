@@ -9,6 +9,7 @@
 #include "MenuState.h"
 #include "LevelCompleteState.h"
 #include "LevelSelectorState.h"
+#include "GameSettingState.h"
 
 #endif // !ALLGAMESTATES_H
 

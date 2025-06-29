@@ -22,7 +22,7 @@ public:
 	void Render(Game& game, SDL_Renderer* renderer, SDL_FRect* srcrect, SDL_FRect* destrect);
 	bool isClicked(int x, int y);
 private:
-	SDL_Texture* texture = NULL;
+	SDL_Texture* texture = nullptr;
 	SDL_Rect position;
 	Uint8 alpha = 255;
 };

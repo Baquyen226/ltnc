@@ -31,7 +31,7 @@ private:
 	Texture background;
 	SDL_Rect backgroundRect;
 	float alpha = 255.0f;
-	MapDataLoader* mapDataLoader = NULL;
+	MapDataLoader* mapDataLoader = nullptr;
 	std::vector<MapData> mapDataList;
 	std::vector<LevelEntry*> levelEntries;
 	int selectedLevel = -1;

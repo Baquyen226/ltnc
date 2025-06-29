@@ -22,7 +22,7 @@ public:
 	std::string getText() { return text; };
 private:
 	std::string text; SDL_Color color;
-	Text* Contents = NULL;
+	Text* Contents = nullptr;
 	bool isHovered = false;
 	bool isClicked = false;
 	int x, y, w, h;
