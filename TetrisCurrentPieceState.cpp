@@ -25,6 +25,7 @@ int Tetromino::getPieceID() {
 
 void Tetromino::rotate(int dr) {
 	rotation = (4 + dr + rotation) % 4;
+	//std::cerr << "Rotating piece " << pieceID << " to rotation " << rotation << "\n";
 }
 
 void Tetromino::setPosition(int& xPos, int& yPos) {

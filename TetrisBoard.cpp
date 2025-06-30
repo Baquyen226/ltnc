@@ -332,7 +332,7 @@ bool TetrisBoard::movePiece(MovementType moveType) {
         break;
     case ROTATE_180:
         newRotate = (currentPiece->rotation + 2) % 4;
-        moved = tryRotation(newRotate, 1);
+        moved = tryRotation(newRotate, 2);
         break;
     case SOFT_DROP:
         newY = currentPiece->y + 1;
@@ -542,4 +542,35 @@ void TetrisBoard::HoldPiece() {
 
 void TetrisBoard::setAlpha(Uint8 v) {
     alpha = v;
+}
+
+//waht
+TSpinType TetrisBoard::isTspin() {
+	if (currentPiece->pieceID != T_PIECE) return NONE;
+	int x = currentPiece->x;
+	int y = currentPiece->y;
+	int rotation = currentPiece->rotation;
+
+	//Check if both of the front corners are occupied
+	short corner1X = x + frontCorner[rotation][0][0];
+	short corner1Y = y + frontCorner[rotation][0][1];
+	short corner2X = x + frontCorner[rotation][1][0];
+	short corner2Y = y + frontCorner[rotation][1][1];
+	short frontCornerOccupied = isCellOccupied(corner1X, corner1Y) + isCellOccupied(corner2X, corner2Y);    //isCellOccupied(firstcorner) && isCellOccupied(secondcorner);
+
+	//Either one of the back corners is occupied
+    short backCorner1X = x + frontCorner[(rotation + 2) % 4][0][0];
+	short backCorner1Y = y + frontCorner[(rotation + 2) % 4][0][1];
+	short backCorner2X = x + frontCorner[(rotation + 2) % 4][1][0];
+	short backCorner2Y = y + frontCorner[(rotation + 2) % 4][1][1];
+    short backCornerOccupied = isCellOccupied(backCorner1X, backCorner1Y) + isCellOccupied(backCorner2X, backCorner2Y);
+
+	if (frontCornerOccupied == 2 && backCornerOccupied >= 1) return T_SPIN; //T-spin
+	if (frontCornerOccupied == 1 && backCornerOccupied >= 1) return T_SPIN_MINI; //T-spin mini
+	return NONE; //not a T-spin
+}
+
+bool TetrisBoard::isCellOccupied(int x, int y) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return true;
+    return pBoard[y][x] != 0;
 }

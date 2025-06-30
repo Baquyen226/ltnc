@@ -32,17 +32,9 @@ class TetrisBoard {
 		~TetrisBoard();
 		void    loadAsset(SDL_Renderer* renderer);
 		void	Clean();
-		void	clearBoard();
-		void	printBoard();
-		void	getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha);
 		void	Render(SDL_Renderer* renderer);
-		void	editCell(int i, int j, int val);
-		bool	canMove(int x, int y, int r);
 		bool	tryRotation(int newRotation, int direction);
 		bool 	movePiece(MovementType movement);
-		void	deleteOldBlock();
-		void	putBlockInPlace();
-		int		checkForLineClear(SDL_Renderer* renderer, Game& game);
 		void	boardUpdate(SDL_Renderer* renderer, Game& game);
 		void	GameOver();
 		void	Reset(Game& game);
@@ -55,6 +47,7 @@ class TetrisBoard {
 		void	Rotate180();
 		void	HardDrop();
 		void	SoftDrop();
+		void	clearBoard();
 	
 		//probably not the best idea to group these together
 		void	HoldPiece();
@@ -66,10 +59,21 @@ class TetrisBoard {
 		int			level;
 		int 		holdPiece = -1;
 		bool		isHoldUsed = false;
+		MovementType lastMovement;
 		float		alpha = 255.0f;
 	
 		TetrisQueue* queue = nullptr;
 		Tetromino* currentPiece = nullptr;
+
+		void	getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha);
+		void	deleteOldBlock();
+		void	putBlockInPlace();
+		int		checkForLineClear(SDL_Renderer* renderer, Game& game);
+		bool	canMove(int x, int y, int r);
+		void	editCell(int i, int j, int val);
+		void	printBoard();
+		TSpinType isTspin();
+		bool	isCellOccupied(int x, int y);
 };
 #endif // !TETRISCHALLENGE_H
 
