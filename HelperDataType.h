@@ -55,4 +55,34 @@ struct VideoFrame {
 	AVFrame* frame;
 	int64_t pts;
 };
+
+enum MovementType {
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	ROTATE_CW,
+	ROTATE_CCW,
+	ROTATE_180,
+	SOFT_DROP,
+	HARD_DROP,
+	FALSE_HARD_DROP, //for ghost piece
+	MOVE_NONE
+};
+
+enum TSpinType {
+	NONE,
+	T_SPIN,
+	T_SPIN_MINI
+};
+
+//The face at which the T-piece corners face relative to the top corner of the matrix
+// {x, y} coordinates
+static short frontCorner[4][2][2] = {
+	{ { 0, 0 }, { 2, 0 } }, // Rotation 0
+	{ { 2, 0 }, { 2, 2 } }, // Rotation 1
+	{ { 0, 2 }, { 2, 2 } }, // Rotation 2
+	{ { 0, 0 }, { 0, 2 } }  // Rotation 3
+};
+
+
+
 #endif
