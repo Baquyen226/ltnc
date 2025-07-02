@@ -2,6 +2,7 @@
 #include "game.h"
 
 bool TetrisChallenge::enter(Game& game, SDL_Renderer* renderer) {
+	game.getStats()->loadAssets(renderer);
 	board = new TetrisBoard;
 	board->clearBoard();
 	return true;
@@ -74,6 +75,7 @@ void TetrisChallenge::update(Game& game, SDL_Renderer* renderer) {
 	game.getStats()->setAlpha(alpha);
 
 	Uint64 now = SDL_GetTicks();
+	// PLEASE BE CONSISTENT OVER USING FRAME TIMERS AND DELTATIME :SOB:
 	if (isRightHeld) {
 		if (now - rightPressed > DELAYED_AUTO_SHIFT) {
 			int p = (now - rightPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;

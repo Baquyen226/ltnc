@@ -13,7 +13,7 @@ const int SCREEN_HEIGHT = 900;
 const Uint64 HIT_WINDOW = 700;
 
 //render
-const Uint64 BAR_X = SCREEN_WIDTH / 4;
+const Uint64 BAR_X = SCREEN_WIDTH / 4; // really the the coordinate shouldve been part of the class
 const Uint64 BAR_Y = SCREEN_HEIGHT / 10;
 const Uint64 BAR_WIDTH = 600;
 const Uint64 BAR_HEIGHT = 20;
@@ -55,7 +55,14 @@ const int INITIAL_PIECE_POSITION_X = 3;
 const int INITIAL_PIECE_POSITION_Y = 1;
 const int INITIAL_ROTATION_STATE = 0;
 const int BASE_GRAVITY = 90;
-const int MAX_PIECE_LOCK_FRAMES = 30; // Number of frames before a piece locks in place
+
+const Uint16 LINE_CLEAR_TEXT_X_OFFSET_FROM_BOARD = 30;
+const Uint16 LINE_CLEAR_TEXT_Y = HOLD_PIECE_OFFSET_Y + 240;
+const Uint16 TSPIN_TEXT_X_OFFSET_FROM_BOARD = 30;
+const Uint16 TSPIN_TEXT_Y = LINE_CLEAR_TEXT_Y - 30;
+
+const int MAX_PIECE_LOCK_FRAMES = 60; // Number of frames before a piece locks in place
+const int LINE_CLEAR_TEXT_LIFE_TIME = 1000;
 
 // Map data loader constants
 const std::string MAP_FOLDER_PATH = "assets/beatmap";

@@ -108,113 +108,8 @@ void TetrisBoard::getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha
 }
 
 void TetrisBoard::Render(SDL_Renderer* renderer) {
-    //render hold piece
-    PieceType holdPieceID = (PieceType)holdPiece;
-    SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, alpha);
-    SDL_RenderRect(renderer, &holdPieceContainer);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
-    SDL_RenderFillRect(renderer, &holdPieceContainer);
-
-    int size = (holdPieceID == I_PIECE) ? 4 : 3;
-
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            if (Piece_Shape[holdPieceID][0][i][j] != 0) {
-                //Pieces that has block at the first row on spawn state: S, Z, T
-                bool firstRowOccupied = (holdPieceID == S_PIECE || holdPieceID == Z_PIECE || holdPieceID == T_PIECE);
-                //Pieces (except I piece) that has the first column occupied
-                bool firstColumnOccupied = !(holdPieceID == I_PIECE || holdPieceID == O_PIECE);
-
-                int cellSize_posX = HOLD_PIECE_OFFSET_X + firstColumnOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * j + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
-                    cellSize_posY = HOLD_PIECE_OFFSET_Y + firstRowOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * i;
-
-                SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
-
-                getRenderColor(renderer, holdPieceID + 1, alpha);
-                SDL_RenderFillRect(renderer, &cell);
-
-                SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
-                SDL_RenderRect(renderer, &cell);
-            }
-        }
-    }
-    SDL_FRect holdPieceCell = { HOLD_PIECE_OFFSET_X + CELL_SIZE, HOLD_PIECE_OFFSET_Y + CELL_SIZE, CELL_SIZE, CELL_SIZE };
-
-    //render the last 2 lines without the board grid(otherwise the piece would just look weird)
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-            if (pBoard[i][j] != 0) {
-                SDL_FRect cell = { BOARD_OFFSET_X + j * CELL_SIZE, BOARD_OFFSET_Y + i * CELL_SIZE, CELL_SIZE, CELL_SIZE };
-
-                getRenderColor(renderer, pBoard[i][j], alpha);
-
-                SDL_RenderFillRects(renderer, &cell, 1);
-
-                // Draw grid
-                SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
-                SDL_RenderRect(renderer, &cell);
-            }
-        }
-    }
-
-    //render the first 20 lines
-    for (int i = 2; i < BOARD_HEIGHT; i++) {
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-            SDL_FRect cell = { BOARD_OFFSET_X + j * CELL_SIZE, BOARD_OFFSET_Y + i * CELL_SIZE, CELL_SIZE, CELL_SIZE };
-
-            getRenderColor(renderer, pBoard[i][j], alpha);
-
-            SDL_RenderFillRects(renderer, &cell, 1);
-
-            // Draw grid
-            SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
-            SDL_RenderRect(renderer, &cell);
-        }
-    }
-
-    //Render ghost piece
-    //DO NOT RENDER GHOST PIECE IF OVERLAPPED BY CURRENTPIECE
-    if (ghostPiece.y != currentPiece->y) {
-        for (int i = 0; i < currentPiece->pieceSize; i++) {
-            for (int j = 0; j < currentPiece->pieceSize; j++) {
-                // Skip empty blocks
-                if (Piece_Shape[ghostPiece.id][ghostPiece.rotation][i][j] == 0) continue;
-
-                int ghostX = j + ghostPiece.x;
-                int ghostY = i + ghostPiece.y;
-
-                // Check if ghost overlaps with the current piece
-                bool overlaps = false;
-                for (int pi = 0; pi < currentPiece->pieceSize; pi++) {
-                    for (int pj = 0; pj < currentPiece->pieceSize; pj++) {
-                        if (Piece_Shape[currentPiece->pieceID][currentPiece->rotation][pi][pj] != 0) {
-                            int pieceX = pj + currentPiece->x;
-                            int pieceY = pi + currentPiece->y;
-                            if (pieceX == ghostX && pieceY == ghostY) {
-                                overlaps = true;
-                            }
-                        }
-                    }
-                }
-
-                if (!overlaps) {
-                    int x = BOARD_OFFSET_X + CELL_SIZE * ghostX;
-                    int y = BOARD_OFFSET_Y + CELL_SIZE * ghostY;
-                    SDL_FRect ghostCell = { x, y, CELL_SIZE, CELL_SIZE };
-
-                    // Render ghost piece only if no overlap
-                    int a = alpha * 128 / 255;
-                    SDL_SetRenderDrawColor(renderer, 128, 128, 128, a);
-                    SDL_RenderFillRect(renderer, &ghostCell);
-
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, a);
-                    SDL_RenderRect(renderer, &ghostCell);
-                }
-            }
-        }
-    }
+	renderHoldPiece(renderer);
+	renderPlayingBoard(renderer);
 
     //other stuff
     queue->Render(renderer, alpha); 
@@ -252,7 +147,7 @@ bool TetrisBoard::tryRotation(int newRotation, int direction) {
         int offsetX = 0, offsetY = 0;
         //0(currentRotation)->1(newRotation) uses index 0 when referencing the kick table when rotating clockwise              
         //1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
-        //therefore CW uses currenRotation, CCW uses newRotation, except its multiplied by -1(direction)
+        //therefore CW uses currenRotation, CCW uses newRotation * (-1) since i want to reverse the rotation
 
         switch (currentPiece->pieceID) {
         case O_PIECE:
@@ -313,6 +208,7 @@ bool TetrisBoard::movePiece(MovementType moveType) {
         if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
             currentPiece->moveLeft();
             moved = true;
+			lastMovement = MOVE_LEFT;
         }
         break;
     case MOVE_RIGHT:
@@ -320,25 +216,30 @@ bool TetrisBoard::movePiece(MovementType moveType) {
         if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
             currentPiece->moveRight();
             moved = true;
+			lastMovement = MOVE_RIGHT;
         }
         break;
     case ROTATE_CW:
         newRotate = (currentPiece->rotation + 1) % 4;
         moved = tryRotation(newRotate, 1);
+		if (moved) lastMovement = ROTATE_CW;
         break;
     case ROTATE_CCW:
         newRotate = (currentPiece->rotation + 3) % 4;
         moved = tryRotation(newRotate, -1);
+		if (moved) lastMovement = ROTATE_CCW;
         break;
     case ROTATE_180:
         newRotate = (currentPiece->rotation + 2) % 4;
         moved = tryRotation(newRotate, 2);
+		if (moved) lastMovement = ROTATE_180;
         break;
     case SOFT_DROP:
         newY = currentPiece->y + 1;
         if (canMove(currentPiece->x, newY, currentPiece->rotation)) {
             currentPiece->moveDown();
             moved = true;
+			lastMovement = SOFT_DROP;
         }
         break;
     case HARD_DROP: {
@@ -360,7 +261,6 @@ bool TetrisBoard::movePiece(MovementType moveType) {
         ghostPiece.save(currentPiece->pieceID, currentPiece->x, fy, currentPiece->rotation);
         break;
     }
-
 
     putBlockInPlace();
     return moved;
@@ -408,7 +308,7 @@ void TetrisBoard::putBlockInPlace() {
     }
 }
 
-int TetrisBoard::checkForLineClear(SDL_Renderer* renderer, Game &game) {
+int TetrisBoard::checkForLineClear(TSpinType type, SDL_Renderer* renderer, Game &game) {
     int lineCleared = 0;
 
     for (int i = 2; i < BOARD_HEIGHT; i++) {
@@ -437,11 +337,11 @@ int TetrisBoard::checkForLineClear(SDL_Renderer* renderer, Game &game) {
             }
         }
     }
-    if (lineCleared >= 1) {
-        game.getStats()->Update(lineCleared, renderer);
-        std::cout << "Line cleared: " << game.getStats()->totalLineCleared << "\n";
+    if (lineCleared >= 1 || type != NONE) {
+        game.getStats()->Update(lineCleared, type, renderer);
+        /*std::cout << "Line cleared: " << game.getStats()->totalLineCleared << "\n";
         std::cout << "Points: " << game.getStats()->points << "\n";
-        std::cout << "frames/falldown: " << game.getStats()->gravity << "\n\n";
+        std::cout << "frames/falldown: " << game.getStats()->gravity << "\n\n";*/
     }
     return lineCleared;
 }
@@ -454,6 +354,7 @@ void TetrisBoard::GameOver() {
 
 void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
     if (state != NORMAL) return;
+
 	bool isOnGround = !canMove(currentPiece->x, currentPiece->y + 1, currentPiece->rotation);
 	if (isOnGround) { pieceLockfTimer++; }
 	else { pieceLockfTimer = 0; }
@@ -461,7 +362,11 @@ void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
     // Handle locked pieces
     if (currentPiece->isLocked) {
         isHoldUsed = false;
-        int clears = checkForLineClear(renderer, game);
+		TSpinType tSpinType = isTspin();
+		/*if (tSpinType != NONE) {
+			std::cout << "T-spin detected: " << tSpinType << "\n";
+		}*/
+        int clears = checkForLineClear(tSpinType, renderer, game);
         currentPiece->generateNewPiece(queue, -1);
         if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) {
             GameOver();
@@ -471,9 +376,7 @@ void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
     else {
         if (fTimer >= game.getStats()->gravity) {
             fTimer = 0;
-            if (!movePiece(SOFT_DROP) && pieceLockfTimer >= MAX_PIECE_LOCK_FRAMES) {
-                currentPiece->isLocked = true;
-            }
+            if (!movePiece(SOFT_DROP) && pieceLockfTimer >= MAX_PIECE_LOCK_FRAMES) currentPiece->isLocked = true;
         }
         else {
             fTimer++;
@@ -565,12 +468,131 @@ TSpinType TetrisBoard::isTspin() {
 	short backCorner2Y = y + frontCorner[(rotation + 2) % 4][1][1];
     short backCornerOccupied = isCellOccupied(backCorner1X, backCorner1Y) + isCellOccupied(backCorner2X, backCorner2Y);
 
-	if (frontCornerOccupied == 2 && backCornerOccupied >= 1) return T_SPIN; //T-spin
-	if (frontCornerOccupied == 1 && backCornerOccupied >= 1) return T_SPIN_MINI; //T-spin mini
+	bool lastMoveWasRotation = (lastMovement == ROTATE_CW || lastMovement == ROTATE_CCW || lastMovement == ROTATE_180);
+	if (lastMoveWasRotation && frontCornerOccupied == 2 && backCornerOccupied >= 1) return T_SPIN;
+	if (lastMoveWasRotation && frontCornerOccupied == 1 && backCornerOccupied >= 1) return T_SPIN_MINI; 
 	return NONE; //not a T-spin
 }
 
 bool TetrisBoard::isCellOccupied(int x, int y) {
     if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return true;
     return pBoard[y][x] != 0;
+}
+
+void TetrisBoard::renderHoldPiece(SDL_Renderer* renderer) {
+    PieceType holdPieceID = (PieceType)holdPiece;
+    SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, alpha);
+    SDL_RenderRect(renderer, &holdPieceContainer);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
+    SDL_RenderFillRect(renderer, &holdPieceContainer);
+
+    int size = (holdPieceID == I_PIECE) ? 4 : 3;
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (Piece_Shape[holdPieceID][0][i][j] != 0) {
+                //Pieces that has block at the first row on spawn state: S, Z, T
+                bool firstRowOccupied = (holdPieceID == S_PIECE || holdPieceID == Z_PIECE || holdPieceID == T_PIECE);
+                //Pieces (except I piece) that has the first column occupied
+                bool firstColumnOccupied = !(holdPieceID == I_PIECE || holdPieceID == O_PIECE);
+
+                int cellSize_posX = HOLD_PIECE_OFFSET_X
+                    + firstColumnOccupied * CELL_SIZE
+                    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE
+                    + CELL_SIZE * j
+                    + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
+                    cellSize_posY = HOLD_PIECE_OFFSET_Y
+                    + firstRowOccupied * CELL_SIZE
+                    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE
+                    + CELL_SIZE * i;
+
+                SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
+
+                getRenderColor(renderer, holdPieceID + 1, alpha);
+                SDL_RenderFillRect(renderer, &cell);
+
+                SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
+                SDL_RenderRect(renderer, &cell);
+            }
+        }
+    }
+}
+
+void TetrisBoard::renderPlayingBoard(SDL_Renderer* renderer) {
+    //render the last 2 lines without the board grid(otherwise the piece would just look weird)
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            if (pBoard[i][j] != 0) {
+                SDL_FRect cell = { BOARD_OFFSET_X + j * CELL_SIZE, BOARD_OFFSET_Y + i * CELL_SIZE, CELL_SIZE, CELL_SIZE };
+
+                getRenderColor(renderer, pBoard[i][j], alpha);
+
+                SDL_RenderFillRects(renderer, &cell, 1);
+
+                // Draw grid
+                SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
+                SDL_RenderRect(renderer, &cell);
+            }
+        }
+    }
+
+    //render the first 20 lines
+    for (int i = 2; i < BOARD_HEIGHT; i++) {
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            SDL_FRect cell = { BOARD_OFFSET_X + j * CELL_SIZE, BOARD_OFFSET_Y + i * CELL_SIZE, CELL_SIZE, CELL_SIZE };
+
+            getRenderColor(renderer, pBoard[i][j], alpha);
+
+            SDL_RenderFillRects(renderer, &cell, 1);
+
+            // Draw grid
+            SDL_SetRenderDrawColor(renderer, 50, 50, 50, alpha);
+            SDL_RenderRect(renderer, &cell);
+        }
+    }
+
+    //Render ghost piece
+    //DO NOT RENDER GHOST PIECE IF OVERLAPPED BY CURRENTPIECE
+    if (ghostPiece.y != currentPiece->y) {
+        for (int i = 0; i < currentPiece->pieceSize; i++) {
+            for (int j = 0; j < currentPiece->pieceSize; j++) {
+                // Skip empty blocks
+                if (Piece_Shape[ghostPiece.id][ghostPiece.rotation][i][j] == 0) continue;
+
+                int ghostX = j + ghostPiece.x;
+                int ghostY = i + ghostPiece.y;
+
+                // Check if ghost overlaps with the current piece
+                bool overlaps = false;
+                for (int pi = 0; pi < currentPiece->pieceSize; pi++) {
+                    for (int pj = 0; pj < currentPiece->pieceSize; pj++) {
+                        if (Piece_Shape[currentPiece->pieceID][currentPiece->rotation][pi][pj] != 0) {
+                            int pieceX = pj + currentPiece->x;
+                            int pieceY = pi + currentPiece->y;
+                            if (pieceX == ghostX && pieceY == ghostY) {
+                                overlaps = true;
+                            }
+                        }
+                    }
+                }
+
+                if (!overlaps) {
+                    int x = BOARD_OFFSET_X + CELL_SIZE * ghostX;
+                    int y = BOARD_OFFSET_Y + CELL_SIZE * ghostY;
+                    SDL_FRect ghostCell = { x, y, CELL_SIZE, CELL_SIZE };
+
+                    // Render ghost piece only if no overlap
+                    int a = alpha * 128 / 255;
+                    SDL_SetRenderDrawColor(renderer, 128, 128, 128, a);
+                    SDL_RenderFillRect(renderer, &ghostCell);
+
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, a);
+                    SDL_RenderRect(renderer, &ghostCell);
+                }
+            }
+        }
+    }
+
 }

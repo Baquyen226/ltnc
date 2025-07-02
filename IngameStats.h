@@ -6,6 +6,7 @@
 
 #include "constants.h"
 #include "texture.h"
+#include "HelperDataType.h"
 
 struct IngameStats {
     IngameStats();
@@ -21,14 +22,28 @@ struct IngameStats {
     int			    points = 0;
     int			    line_clear_points_reward[4] = { 40, 120, 300, 1200 };
 	int             line_clear_health_reward[4] = { 1, 2, 4, 8 };
+    bool 		    clearActive = false;
+	Uint64		    lineClearStartTime = 0; // Time when the line clear effect starts
     Text* pointsText = nullptr;
     Text* levelText = nullptr; 
     Text* linesText = nullptr;
+	Text* lineClearText = nullptr;
+	Text* TSpinText = nullptr;
 
+    Text CLEAR_SINGLE;
+	Text CLEAR_DOUBLE;
+	Text CLEAR_TRIPLE;
+	Text CLEAR_QUAD;
+	Text T_SPIN;
+	Text T_SPIN_MINI;
+    Text NOTHINGLOL;
+	void getLineClearText(int clearedLines, TSpinType type);
+
+	void loadAssets(SDL_Renderer* renderer);
     void addPoints(int clearedLines);
     void addLines(int clearedlines);
     void increaseLevel();
-    void Update(int clearedLines, SDL_Renderer* renderer);
+    void Update(int clearedLines, TSpinType type, SDL_Renderer* renderer);
     void Render(SDL_Renderer* renderer);
 
     //Rhythm

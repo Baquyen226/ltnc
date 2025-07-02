@@ -13,6 +13,7 @@ IngameStats::IngameStats() {
 	lineClearedThisLevel = 0;
 	points = 0;
 	gravity = BASE_GRAVITY;
+	Reset();
 	pointsText = new Text;
 	pointsText->loadFont("assets/fonts/8-bit.ttf", 24);
 	levelText = new Text;
@@ -21,6 +22,26 @@ IngameStats::IngameStats() {
 	linesText->loadFont("assets/fonts/8-bit.ttf", 24);
 }
 
+void IngameStats::loadAssets(SDL_Renderer* renderer) {
+	// init clears and spins texts
+	CLEAR_SINGLE.loadFont("assets/fonts/8-bit.ttf", 24);
+	CLEAR_DOUBLE.loadFont("assets/fonts/8-bit.ttf", 24);
+	CLEAR_TRIPLE.loadFont("assets/fonts/8-bit.ttf", 24);
+	CLEAR_QUAD.loadFont("assets/fonts/8-bit.ttf", 24);
+	CLEAR_SINGLE.loadTextToTexture("SINGLE", { 255, 255, 255, 255 }, renderer);
+	CLEAR_DOUBLE.loadTextToTexture("DOUBLE", { 255, 255, 255, 255 }, renderer);
+	CLEAR_TRIPLE.loadTextToTexture("TRIPLE", { 255, 255, 255, 255 }, renderer);
+	CLEAR_QUAD.loadTextToTexture("QUAD", { 255, 255, 255, 255 }, renderer);
+
+	NOTHINGLOL.loadFont("assets/fonts/8-bit.ttf", 24);
+	NOTHINGLOL.loadTextToTexture(" ", { 255, 255, 255, 255 }, renderer);
+
+	T_SPIN.loadFont("assets/fonts/8-bit.ttf", 16);
+	T_SPIN_MINI.loadFont("assets/fonts/8-bit.ttf", 16);
+	T_SPIN.loadTextToTexture("T-SPIN", { 255, 255, 255, 255 }, renderer);
+	T_SPIN_MINI.loadTextToTexture("MINI T-SPIN", { 255, 255, 255, 255 }, renderer);
+	textLoaded = true;
+}
 void IngameStats::Reset() {
 	level = 0;
 	totalLineCleared = 0;
@@ -54,12 +75,21 @@ void IngameStats::increaseLevel() {
 	if (gravity <= 0) gravity = 1;
 }
 
-void IngameStats::Update(int clearedLines, SDL_Renderer* renderer) {
+void IngameStats::Update(int clearedLines, TSpinType type, SDL_Renderer* renderer) {
 	SDL_Color COLOR_WHITE = { 255, 255, 255, alpha };
 	if (clearedLines > 0) {
 		addPoints(clearedLines);
 		addLines(clearedLines);
 	}
+
+	if (clearedLines > 0 || type != NONE) {
+		getLineClearText(clearedLines, type);
+		std::cerr << "clearActive triggered\n";
+		clearActive = true;
+		lineClearStartTime = SDL_GetTicks();
+		//std::cerr << "[IngameStats] Update called with" << clearedLines << " lines, and " << type << " T-spin!\n";
+	}
+
 	//dumbass condition check( i need to update points on hit note :(( )
 	if (clearedLines > 0 || !textLoaded || clearedLines == -1) {
 		pointsText->loadTextToTexture("Points: " + std::to_string(points), COLOR_WHITE, renderer);
@@ -82,12 +112,35 @@ void IngameStats::Render(SDL_Renderer* renderer) {
 	SDL_RenderFillRect(renderer, &statsRect);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, alpha);
 	SDL_RenderRect(renderer, &statsRect);
-
-	//inside
 	
 	pointsText->Render(renderer, 100, 670);
 	levelText->Render(renderer, 100, 700);
 	linesText->Render(renderer, 100, 730);
+
+	//is this even being called??
+	if (clearActive) {
+		std::cerr << "[IngameStats] Rendering line clear text\n";
+		Uint64 currentTime = SDL_GetTicks();
+		if (currentTime - lineClearStartTime < LINE_CLEAR_TEXT_LIFE_TIME) {
+			double alpha = 255.0 * (LINE_CLEAR_TEXT_LIFE_TIME - (currentTime - lineClearStartTime)) / LINE_CLEAR_TEXT_LIFE_TIME;
+			lineClearText->setAlpha(alpha);
+			TSpinText->setAlpha(alpha);
+			int x, y;
+			lineClearText->getSize(&x, &y);
+			int lineClearTextX = BOARD_OFFSET_X - LINE_CLEAR_TEXT_X_OFFSET_FROM_BOARD - x;
+			//std::cerr << "[IngameStats] Rendering line clear text at " << lineClearTextX << ", " << LINE_CLEAR_TEXT_Y << "\n";
+			lineClearText->Render(renderer, lineClearTextX , LINE_CLEAR_TEXT_Y);
+			
+			TSpinText->getSize(&x, &y);
+			int TSpinTextX = BOARD_OFFSET_X - TSPIN_TEXT_X_OFFSET_FROM_BOARD - x;
+			//std::cerr << "[IngameStats] Rendering T-spin text at " << TSpinTextX << ", " << TSPIN_TEXT_Y << "\n";
+			TSpinText->Render(renderer, TSpinTextX, TSPIN_TEXT_Y);
+		}
+		else {
+			std::cerr << "[IngameStats] Line clear text expired\n";
+			clearActive = false;
+		}
+	}
 
 	SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
@@ -147,4 +200,37 @@ void IngameStats::registerHits(int judgement) {
 	ActualHealth = std::min(100.0f, ActualHealth);
 	maxCombo = std::max(combo, maxCombo);
 	accuracy = totalHits > 0 ? (float)(perfectHits + goodHits * 0.5f) / totalHits * 100.0f : 0.0f;
+}
+
+void IngameStats::getLineClearText(int lines, TSpinType type) {
+	switch (lines) {
+	case 1:
+		lineClearText = &CLEAR_SINGLE;
+		break;
+	case 2:
+		lineClearText = &CLEAR_DOUBLE;
+		break;
+	case 3:
+		lineClearText = &CLEAR_TRIPLE;
+		break;
+	case 4:
+		lineClearText = &CLEAR_QUAD;
+		break;
+	default:
+		lineClearText = &NOTHINGLOL;
+		break;
+	}
+
+	switch (type) {
+	case TSpinType::T_SPIN:
+		TSpinText = &T_SPIN;
+		break;
+	case TSpinType::T_SPIN_MINI:
+		TSpinText = &T_SPIN_MINI;
+		break;
+	default:
+		TSpinText = &NOTHINGLOL;
+		break;
+	}
+	std::cerr << "[IngameStats] Line clear text set to " << lineClearText->getText() << " and T-spin text set to " << TSpinText->getText() << "\n";
 }

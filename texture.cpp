@@ -76,6 +76,7 @@ void Text::loadTextToTexture(std::string text, SDL_Color color, SDL_Renderer* re
 
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
 	if (!texture) std::cerr << "An error occured why trying to load surface to texture " << SDL_GetError() << "\n";
+	this->text = text;
 
 	SDL_DestroySurface(surface);
 }
@@ -101,5 +102,6 @@ void Text::Render(SDL_Renderer* renderer, int x, int y) {
 	int w = texture->w;
 	int h = texture->h;
 	SDL_FRect rect = { x, y, w, h };
+	//std::cerr << "Rendering text " << text << " at(" << x << ", " << y << ") with size(" << w << ", " << h << ")\n";
 	SDL_RenderTexture(renderer, texture, 0, &rect);
 }

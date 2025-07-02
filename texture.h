@@ -31,6 +31,7 @@ public:
 	void getSize(int* x, int* y);
 	void Render(SDL_Renderer* renderer, int x, int y);
 	SDL_Texture* getTexture() { return texture; };
+	std::string getText() { return text; };
 private:
 	SDL_Texture* texture;
 	SDL_Color textColor;

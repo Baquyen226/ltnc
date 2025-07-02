@@ -86,12 +86,12 @@ void RhythmChallenge::showJudgement(Game& game, int t) {
         JUDGEMENT_GOOD.loadTextToTexture("Good x" + std::to_string(ingameStats->combo), {255, 255, 255, 255}, game.getRenderer());
 		std::string s = RoundToTwoDecimalPlaces(ingameStats->accuracy);
 		ACCURACY.loadTextToTexture(s + "%", { 255, 255, 255, 255 }, game.getRenderer());
-		ingameStats->Update(-1, game.getRenderer());  // Update the stats display
+		ingameStats->Update(-1, NONE, game.getRenderer());  // Update the stats display
     }
 }
 
 bool RhythmChallenge::enter(Game& game, SDL_Renderer* renderer) {
-    std::cout << "Entering Ingame State\n";
+    std::cout << "Entering Ingame State with NO MAP DATA(something went wrong)\n";
     //sfx
     harddrop = new AudioManager();
     std::string test = "vine-boom.mp3";

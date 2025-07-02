@@ -12,16 +12,6 @@
 
 class Game;
 
-enum MovementType {
-	MOVE_LEFT,
-	MOVE_RIGHT,
-	ROTATE_CW,
-	ROTATE_CCW,
-	ROTATE_180,
-	SOFT_DROP,
-	HARD_DROP,
-	FALSE_HARD_DROP //for ghost piece
-};
 
 class TetrisBoard {
 	public:
@@ -66,9 +56,12 @@ class TetrisBoard {
 		Tetromino* currentPiece = nullptr;
 
 		void	getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha);
+		void    renderHoldPiece(SDL_Renderer* renderer);
+		void    renderPlayingBoard(SDL_Renderer* renderer);
+
 		void	deleteOldBlock();
 		void	putBlockInPlace();
-		int		checkForLineClear(SDL_Renderer* renderer, Game& game);
+		int		checkForLineClear(TSpinType type, SDL_Renderer* renderer, Game& game);
 		bool	canMove(int x, int y, int r);
 		void	editCell(int i, int j, int val);
 		void	printBoard();
