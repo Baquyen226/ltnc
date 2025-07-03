@@ -15,15 +15,15 @@
 int judge(Uint64 offset) {
     double absOffset = (double)offset;
     if (absOffset < 90) {
-        std::cerr << "PERFECT\n";
+        //std::cerr << "PERFECT\n";
         return 0;
     }
     else if (absOffset < 200) {
-        std::cerr << "OK\n";
+        //std::cerr << "OK\n";
         return 1;
     }
     else {
-        std::cerr << "YOU SUCK\n";
+        //std::cerr << "YOU SUCK\n";
         return 2;
     }
 }

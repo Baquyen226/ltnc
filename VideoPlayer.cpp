@@ -13,7 +13,7 @@ void VideoPlayer::init(const char* filename) {
     avformat_network_init();
     if (avformat_open_input(&formatCtx, filename, nullptr, nullptr) < 0 ||
         avformat_find_stream_info(formatCtx, nullptr) < 0) {
-        std::cerr << "[Init] Failed to open or parse input file\n";
+        std::cerr << "[VideoPlayer::Init] Failed to open or parse input file\n";
         return;
     }
 
@@ -24,7 +24,7 @@ void VideoPlayer::init(const char* filename) {
         }
     }
     if (videoStreamIndex == -1) {
-        std::cerr << "[Init] No video stream found\n";
+        std::cerr << "[VideoPlayer::Init] No video stream found\n";
         return;
     }
 
@@ -52,22 +52,47 @@ void VideoPlayer::init(const char* filename) {
 
 void VideoPlayer::decodeLoop() {
     while (decodeLoopFlag) {
-        if (av_read_frame(formatCtx, packet) >= 0 && packet->stream_index == videoStreamIndex) {
+        // Check buffer size safely
+        bool bufferFull = false;
+        {
+            std::lock_guard<std::mutex> lock(bufferMutex);
+            bufferFull = (frameBuffer.size() >= MAX_FRAME_BUFFER_SIZE);
+        }
+
+        if (bufferFull) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            continue;
+        }
+
+        // Read one frame
+        int ret = av_read_frame(formatCtx, packet);
+        if (ret < 0) {
+            if (ret == AVERROR_EOF) {
+                // End of file - stop gracefully
+                playing = false;
+                decodeLoopFlag = false;
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
+
+        if (packet->stream_index == videoStreamIndex) {
             if (avcodec_send_packet(codecCtx, packet) == 0) {
                 while (avcodec_receive_frame(codecCtx, frame) == 0) {
                     AVFrame* copy = av_frame_alloc();
-                    av_frame_ref(copy, frame);
-                    {
+                    if (copy && av_frame_ref(copy, frame) == 0) {
                         std::lock_guard<std::mutex> lock(bufferMutex);
                         frameBuffer.push_back({ copy, copy->pts });
                     }
+                    else {
+                        if (copy) av_frame_free(&copy);
+                    }
                 }
             }
-            av_packet_unref(packet);
         }
-        else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
+
+        av_packet_unref(packet);
     }
 }
 
@@ -92,6 +117,9 @@ void VideoPlayer::uploadFrameToTexture(AVFrame* srcFrame) {
 
 void VideoPlayer::update() {
     if (!playing) return;
+    if (startTime == 0 && frameBuffer.size() >= 2) {
+        startTime = SDL_GetTicks();
+    }
 
     double currentTime = (SDL_GetTicks() - startTime) / 1000.0;
     std::lock_guard<std::mutex> lock(bufferMutex);

@@ -14,15 +14,18 @@ IngameStats::IngameStats() {
 	points = 0;
 	gravity = BASE_GRAVITY;
 	Reset();
+}
+
+void IngameStats::loadAssets(SDL_Renderer* renderer) {
 	pointsText = new Text;
 	pointsText->loadFont("assets/fonts/8-bit.ttf", 24);
 	levelText = new Text;
 	levelText->loadFont("assets/fonts/8-bit.ttf", 24);
 	linesText = new Text;
 	linesText->loadFont("assets/fonts/8-bit.ttf", 24);
-}
+	B2BText = new Text;
+	B2BText->loadFont("assets/fonts/8-bit.ttf", 24);
 
-void IngameStats::loadAssets(SDL_Renderer* renderer) {
 	// init clears and spins texts
 	CLEAR_SINGLE.loadFont("assets/fonts/8-bit.ttf", 24);
 	CLEAR_DOUBLE.loadFont("assets/fonts/8-bit.ttf", 24);
@@ -58,9 +61,27 @@ void IngameStats::Reset() {
 }
 
 
-void IngameStats::addPoints(int clearedLines) {
-	points += line_clear_points_reward[clearedLines - 1] * (level + 1);
-	ActualHealth += line_clear_health_reward[clearedLines - 1];
+void IngameStats::addPoints(int clearedLines, TSpinType type) {
+	//a bit dangerous since tspin arrays are not the same size as line clear arrays
+	double multiplier = (b2b > 0) ? 1.5 : 1;
+	switch (type) {
+	case TSpinType::NONE:
+		points += line_clear_points_reward[clearedLines] * (level + 1) * multiplier;
+		ActualHealth += line_clear_health_reward[clearedLines];
+		if (clearedLines == 4) b2b++;
+		else b2b = -1;
+		break;
+	case TSpinType::T_SPIN:
+		points += TSpin_points_reward[clearedLines] * (level + 1) * multiplier;
+		ActualHealth += TSpin_health_reward[clearedLines];
+		if (clearedLines >= 1) b2b++;
+		break;
+	case TSpinType::T_SPIN_MINI:
+		points += TSpinMini_points_reward[clearedLines] * (level + 1) * multiplier;
+		ActualHealth += TSpinMini_health_reward[clearedLines];
+		if (clearedLines >= 1) b2b++;
+		break;
+	}
 }
 
 void IngameStats::addLines(int lines) {
@@ -77,24 +98,26 @@ void IngameStats::increaseLevel() {
 
 void IngameStats::Update(int clearedLines, TSpinType type, SDL_Renderer* renderer) {
 	SDL_Color COLOR_WHITE = { 255, 255, 255, alpha };
-	if (clearedLines > 0) {
-		addPoints(clearedLines);
-		addLines(clearedLines);
-	}
 
 	if (clearedLines > 0 || type != NONE) {
+		addPoints(clearedLines, type);
+		addLines(clearedLines);
+		B2BActive = (b2b > 0);
+
 		getLineClearText(clearedLines, type);
-		std::cerr << "clearActive triggered\n";
 		clearActive = true;
 		lineClearStartTime = SDL_GetTicks();
 		//std::cerr << "[IngameStats] Update called with" << clearedLines << " lines, and " << type << " T-spin!\n";
 	}
 
-	//dumbass condition check( i need to update points on hit note :(( )
+	points = std::ceil(points);
+
+	//theres a clearedLines == -1 specifically reserved for every time a note is hit(maybe i shouldnt have done that)
 	if (clearedLines > 0 || !textLoaded || clearedLines == -1) {
-		pointsText->loadTextToTexture("Points: " + std::to_string(points), COLOR_WHITE, renderer);
+		pointsText->loadTextToTexture("Points: " + std::to_string((int)points), COLOR_WHITE, renderer);
 		linesText->loadTextToTexture("Lines: " + std::to_string(totalLineCleared), COLOR_WHITE, renderer);
 		levelText->loadTextToTexture("Level: " + std::to_string(level), COLOR_WHITE, renderer);
+		B2BText->loadTextToTexture("Back-to-Back x" + std::to_string(b2b), COLOR_WHITE, renderer);
 		textLoaded = true;
 	}
 }
@@ -117,9 +140,7 @@ void IngameStats::Render(SDL_Renderer* renderer) {
 	levelText->Render(renderer, 100, 700);
 	linesText->Render(renderer, 100, 730);
 
-	//is this even being called??
 	if (clearActive) {
-		std::cerr << "[IngameStats] Rendering line clear text\n";
 		Uint64 currentTime = SDL_GetTicks();
 		if (currentTime - lineClearStartTime < LINE_CLEAR_TEXT_LIFE_TIME) {
 			double alpha = 255.0 * (LINE_CLEAR_TEXT_LIFE_TIME - (currentTime - lineClearStartTime)) / LINE_CLEAR_TEXT_LIFE_TIME;
@@ -136,10 +157,16 @@ void IngameStats::Render(SDL_Renderer* renderer) {
 			//std::cerr << "[IngameStats] Rendering T-spin text at " << TSpinTextX << ", " << TSPIN_TEXT_Y << "\n";
 			TSpinText->Render(renderer, TSpinTextX, TSPIN_TEXT_Y);
 		}
-		else {
-			std::cerr << "[IngameStats] Line clear text expired\n";
-			clearActive = false;
-		}
+		else clearActive = false;
+	}
+
+	// Render B2B text if active
+	if (B2BActive) {
+		B2BText->setAlpha(alpha);
+		int x, y;
+		B2BText->getSize(&x, &y);
+		int B2BTextX = BOARD_OFFSET_X - TSPIN_TEXT_X_OFFSET_FROM_BOARD - x;
+		B2BText->Render(renderer, B2BTextX, TSPIN_TEXT_Y + 100);
 	}
 
 	SDL_SetRenderDrawColor(renderer, r, g, b, a);

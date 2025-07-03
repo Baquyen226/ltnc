@@ -56,6 +56,13 @@ const int INITIAL_PIECE_POSITION_Y = 1;
 const int INITIAL_ROTATION_STATE = 0;
 const int BASE_GRAVITY = 90;
 
+constexpr double line_clear_points_reward[5] = { 0, 40, 120, 300, 1200 };
+constexpr double line_clear_health_reward[5] = { 0, 1, 2, 4, 8 };
+constexpr double TSpin_points_reward[4] = { 100, 400, 800, 1200 };
+constexpr double TSpin_health_reward[4] = { 0, 2, 4, 8 };
+constexpr double TSpinMini_points_reward[4] = { 50, 100, 200, 9999 };
+constexpr double TSpinMini_health_reward[4] = { 1, 2, 3, 9999 }; //funny
+
 const Uint16 LINE_CLEAR_TEXT_X_OFFSET_FROM_BOARD = 30;
 const Uint16 LINE_CLEAR_TEXT_Y = HOLD_PIECE_OFFSET_Y + 240;
 const Uint16 TSPIN_TEXT_X_OFFSET_FROM_BOARD = 30;
@@ -63,6 +70,7 @@ const Uint16 TSPIN_TEXT_Y = LINE_CLEAR_TEXT_Y - 30;
 
 const int MAX_PIECE_LOCK_FRAMES = 60; // Number of frames before a piece locks in place
 const int LINE_CLEAR_TEXT_LIFE_TIME = 1000;
+
 
 // Map data loader constants
 const std::string MAP_FOLDER_PATH = "assets/beatmap";

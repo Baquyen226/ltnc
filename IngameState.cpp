@@ -80,6 +80,11 @@ bool IngameState::enter(Game& game, SDL_Renderer* renderer, MapData* MAPDATA) {
 }
 
 bool IngameState::exit() {
+    if (videoPlayer != nullptr) {
+        videoPlayer->stop();
+        delete videoPlayer;
+        videoPlayer = nullptr;
+    }
 	return TetrisPart->exit() && RhythmPart->exit();
 }
 
@@ -139,7 +144,7 @@ void IngameState::update(Game& game, SDL_Renderer* renderer) {
     }
     TetrisPart->update(game, renderer);
     RhythmPart->update(game, renderer);
-	game.getStats()->Update(0, renderer);
+	game.getStats()->Update(0, NONE, renderer);
 }
 
 void IngameState::render(Game& game, SDL_Renderer* renderer)  {

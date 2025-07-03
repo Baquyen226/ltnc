@@ -11,7 +11,7 @@ bool LevelSelectorState::enter(Game& game, SDL_Renderer* renderer) {
 	mapDataList = mapDataLoader->getMapDataList();
 	
 	if (mapDataList.empty()) {
-		std::cerr << "No map data found in the specified folder.\n";
+		std::cerr << "[LevelSelectorState::enter] No map data found in the specified folder.\n";
 		return false;
 	}
 	for (const auto& mapData : mapDataList) {

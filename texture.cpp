@@ -74,6 +74,7 @@ void Text::loadTextToTexture(std::string text, SDL_Color color, SDL_Renderer* re
 	SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.length(), textColor);
 	if (!surface) std::cerr << "An error occured why trying to load text to surface: " << SDL_GetError() << "\n";
 
+	if (texture) SDL_DestroyTexture(texture); // Destroy old texture if it exists
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
 	if (!texture) std::cerr << "An error occured why trying to load surface to texture " << SDL_GetError() << "\n";
 	this->text = text;
