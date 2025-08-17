@@ -28,7 +28,7 @@ Game::Game() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
 	isRunning = true;
-	switchState(new MenuState, renderer);
+	switchState(new GameSettingState, renderer);
 	stats = new IngameStats();
 }
 
