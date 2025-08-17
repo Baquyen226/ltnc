@@ -12,6 +12,8 @@ public:
 	int getNextPiece();
 	void Reset();
 	void Render(SDL_Renderer* renderer, int alpha);
+
+	std::vector<int> getPreviewQueue() const { return previewQueue; };
 private:
 	std::vector<int> bag = { 0,1,2,3,4,5,6 };
 	std::vector<int> pieceQueue;

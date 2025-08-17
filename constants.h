@@ -2,8 +2,9 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 #include <iostream>
+#include <SDL.h>
 
-static const char* TITLE = "My test";
+static const char* TITLE = "rhythm game test";
 const int SCREEN_WIDTH = 1300;
 const int SCREEN_HEIGHT = 900;
 
@@ -12,7 +13,7 @@ const int SCREEN_HEIGHT = 900;
 const Uint64 HIT_WINDOW = 700;
 
 //render
-const Uint64 BAR_X = SCREEN_WIDTH / 4;
+const Uint64 BAR_X = SCREEN_WIDTH / 4; // really the the coordinate shouldve been part of the class
 const Uint64 BAR_Y = SCREEN_HEIGHT / 10;
 const Uint64 BAR_WIDTH = 600;
 const Uint64 BAR_HEIGHT = 20;
@@ -46,14 +47,30 @@ const int BOARD_OFFSET_X = SCREEN_WIDTH / 2 - 200;
 const int BOARD_OFFSET_Y = SCREEN_HEIGHT / 2 - 300;
 const int HOLD_PIECE_OFFSET_X = BOARD_OFFSET_X - CELL_SIZE * 7;
 const int HOLD_PIECE_OFFSET_Y = BOARD_OFFSET_Y + CELL_SIZE * 2;
-const int PIECE_PREVIEW = 3;
+const int PIECE_PREVIEW = 5;
 const int PREVIEW_OFFSET_X = BOARD_OFFSET_X + CELL_SIZE * 10 + SCREEN_WIDTH / 20;
 const int PREVIEW_OFFSET_Y = BOARD_OFFSET_Y + CELL_SIZE * 2;
 
 const int INITIAL_PIECE_POSITION_X = 3;
-const int INITIAL_PIECE_POSITION_Y = 1;
+const int INITIAL_PIECE_POSITION_Y = 0;
 const int INITIAL_ROTATION_STATE = 0;
 const int BASE_GRAVITY = 90;
+
+constexpr double line_clear_points_reward[5] = { 0, 40, 120, 300, 1200 };
+constexpr double line_clear_health_reward[5] = { 0, 1, 2, 4, 8 };
+constexpr double TSpin_points_reward[4] = { 100, 400, 800, 1200 };
+constexpr double TSpin_health_reward[4] = { 0, 2, 4, 8 };
+constexpr double TSpinMini_points_reward[4] = { 50, 100, 200, 9999 };
+constexpr double TSpinMini_health_reward[4] = { 1, 2, 3, 9999 }; //funny
+
+const Uint16 LINE_CLEAR_TEXT_X_OFFSET_FROM_BOARD = 30;
+const Uint16 LINE_CLEAR_TEXT_Y = HOLD_PIECE_OFFSET_Y + 240;
+const Uint16 TSPIN_TEXT_X_OFFSET_FROM_BOARD = 30;
+const Uint16 TSPIN_TEXT_Y = LINE_CLEAR_TEXT_Y - 30;
+
+const int MAX_PIECE_LOCK_FRAMES = 60; // Number of frames before a piece locks in place
+const int LINE_CLEAR_TEXT_LIFE_TIME = 1000;
+
 
 // Map data loader constants
 const std::string MAP_FOLDER_PATH = "assets/beatmap";
@@ -69,6 +86,8 @@ const Uint32 INDIVIDUAL_MAP_W = 600;
 const Uint32 INDIVIDUAL_MAP_H = 140;
 const Uint32 THUMBNAIL_SIZE_X = 136;
 const Uint32 THUMBNAIL_SIZE_Y = 176;
+const Uint32 AUTOPLAY_CHECKBOX_X = 60;
+const Uint32 AUTOPLAY_CHECKBOX_Y = SCREEN_HEIGHT - 120;
 
 
 //file reference
@@ -88,5 +107,30 @@ const Uint32 THUMBNAIL_SIZE_Y = 176;
 // 
 //[Events]
 //some things
+
+//Game setting constants
+const Uint8 DEFAULT_DAS = 130;
+const Uint8 DEFAULT_ARR = 30;
+const int SLIDER_WIDTH  = 600;
+const int SLIDER_HEIGHT = 40;
+const int DAS_SLIDER_X = 200;
+const int DAS_SLIDER_Y = 300;
+const int ARR_SLIDER_X = 200;
+const int ARR_SLIDER_Y = 400;
+
+// ffmpeg constants
+const int MAX_FRAME_BUFFER_SIZE = 15; // Maximum number of frames to buffer
+
+// ai constants. reference: https://codemyroad.wordpress.com/2013/04/14/tetris-ai-the-near-perfect-player/
+const short AI_MOVE_DELAY = 0;
+const float BUMPINESS_WEIGHT = -0.184483f;
+const float HOLE_WEIGHT = -0.35663f;
+const float HEIGHT_WEIGHT = -0.510066f;
+const float COMPLETE_LINES_WEIGHT = 0.760666f;
+// ui stuff
+const int CHECKBOX_WIDTH = 40;
+const int CHECKBOX_HEIGHT = 40; 
+const int CHECKBOX_TO_TEXT_OFFSET = 10;
+
 
 #endif

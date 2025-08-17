@@ -6,11 +6,13 @@
 #include <SDL.h>
 
 class LevelEntry;
+class Checkbox;
 
 #include "Button.h"
 #include "GameState.h"
 #include "MapDataLoader.h"
 #include "LevelEntry.h"
+#include "Checkbox.h"
 
 class LevelSelectorState : public GameState {
 public:
@@ -19,7 +21,8 @@ public:
 	void handleEvent(Game& game, SDL_Event& event) override;
 	void update(Game& game, SDL_Renderer* renderer) override;
 	void render(Game& game, SDL_Renderer* renderer) override;
-	void setAlpha(Uint8 a);
+	void setAlpha(Uint8 a) { alpha = a; };
+	std::string getName() const override { return "LevelSelectorState"; }
 private:
 	std::vector<Button*> buttons;
 	SDL_Color buttonColor = { 255, 255, 255, 255 };
@@ -31,9 +34,11 @@ private:
 	Texture background;
 	SDL_Rect backgroundRect;
 	float alpha = 255.0f;
-	MapDataLoader* mapDataLoader = NULL;
+	MapDataLoader* mapDataLoader = nullptr;
 	std::vector<MapData> mapDataList;
 	std::vector<LevelEntry*> levelEntries;
 	int selectedLevel = -1;
+
+	Checkbox* enableAutoplay = nullptr;
 };
 #endif

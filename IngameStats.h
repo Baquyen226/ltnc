@@ -6,6 +6,7 @@
 
 #include "constants.h"
 #include "texture.h"
+#include "HelperDataType.h"
 
 struct IngameStats {
     IngameStats();
@@ -18,17 +19,32 @@ struct IngameStats {
     int			    totalLineCleared = 0;
     int			    lineClearedThisLevel = 0;
     int			    gravity = BASE_GRAVITY;
-    int			    points = 0;
-    int			    line_clear_points_reward[4] = { 40, 120, 300, 1200 };
-	int             line_clear_health_reward[4] = { 1, 2, 4, 8 };
-    Text* pointsText = NULL;
-    Text* levelText = NULL; 
-    Text* linesText = NULL;
+    double		    points = 0;
+    int             b2b = -1; //i hope this doesnt cause any unforeseen problems *insert laughtrack*
+	Uint64		    lineClearStartTime = 0; // Time when the line clear effect starts
+    bool 		    clearActive = false;
+	bool 		    B2BActive   = false;
+    Text* pointsText = nullptr;
+    Text* levelText = nullptr; 
+    Text* linesText = nullptr;
+	Text* lineClearText = nullptr;
+	Text* TSpinText = nullptr;
+	Text* B2BText = nullptr;
 
-    void addPoints(int clearedLines);
+    Text CLEAR_SINGLE;
+	Text CLEAR_DOUBLE;
+	Text CLEAR_TRIPLE;
+	Text CLEAR_QUAD;
+	Text T_SPIN;
+	Text T_SPIN_MINI;
+    Text NOTHINGLOL;
+	void getLineClearText(int clearedLines, TSpinType type);
+
+	void loadAssets(SDL_Renderer* renderer);
+    void addPoints(int clearedLines, TSpinType type);
     void addLines(int clearedlines);
     void increaseLevel();
-    void Update(int clearedLines, SDL_Renderer* renderer);
+    void Update(int clearedLines, TSpinType type, SDL_Renderer* renderer);
     void Render(SDL_Renderer* renderer);
 
     //Rhythm
@@ -41,7 +57,7 @@ struct IngameStats {
     int combo = 0, totalHits = 0, perfectHits = 0, goodHits = 0, maxCombo = 0;
     
     void registerHits(int judgement);
-	bool isHealthEmpty() { return ActualHealth <= 0.1f; };
+	const bool isHealthEmpty() { return ActualHealth <= 0.1f; };
 
 
     //getters

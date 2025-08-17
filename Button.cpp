@@ -3,13 +3,13 @@
 
 //button class
 Button::Button(){
-	Contents = NULL;
+	Contents = nullptr;
 }
 
 Button::~Button(){
 	if (Contents) {
 		delete Contents;
-		Contents = NULL;
+		Contents = nullptr;
 	}
 }
 

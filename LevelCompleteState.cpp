@@ -59,6 +59,11 @@ bool LevelCompleteState::enter(Game &game, SDL_Renderer* renderer) {
 	accuracyText->setAlpha(255);
 	texts.push_back(accuracyText);
 
+
+	applaudSFX = new AudioManager;
+	std::string path = "assets/sound/applaud.wav";
+	applaudSFX->loadSound(path);
+	applaudSFX->playSound(0); // Play the applause sound effect
 	return true;
 }
 
@@ -73,6 +78,12 @@ bool LevelCompleteState::exit() {
 		std::cerr << "Deleted texts\n";
 	}
 	texts.clear();
+	if (applaudSFX) {
+		applaudSFX->stopSound(); // Stop the applause sound effect
+		delete applaudSFX;
+		applaudSFX = nullptr;
+		std::cerr << "Deleted applaudSFX\n";
+	}
 	return true;
 }
 

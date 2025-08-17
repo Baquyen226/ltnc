@@ -10,12 +10,15 @@
 #include "HelperDataType.h"
 #include "TetrisChallenge.h"
 #include "RhythmChallenge.h"
+#include "VideoPlayer.h"
 
 class TetrisChallenge;
 class RhythmChallenge;
 
 class IngameState : public GameState {
 public:
+	TetrisChallenge* TetrisPart = nullptr;
+	RhythmChallenge* RhythmPart = nullptr;
 	//functions from parent class
 	bool enter(Game& game, SDL_Renderer* renderer) override;
 	bool exit() override;
@@ -26,11 +29,12 @@ public:
 
 	//unique function
 	bool enter(Game& game, SDL_Renderer* renderer, MapData* _mapData);
+	std::string getName() const override { return "IngameState"; }
 private:
-	TetrisChallenge* TetrisPart = NULL;
-	RhythmChallenge* RhythmPart = NULL;
+	VideoPlayer* videoPlayer = nullptr;
 	float globalAlpha = 255.0f;
-	Uint64 GameOverTimestamp;
-	MapData* mapData = NULL;
-};
+	Uint32 startTime = 0; // Time when the game started
+	Uint32 GameOverTimestamp;
+	MapData* mapData = nullptr;
+}; 
 #endif

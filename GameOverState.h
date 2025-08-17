@@ -20,11 +20,12 @@ public:
 	void render(Game& game, SDL_Renderer* renderer) override;
 
 	bool enter(Game& game, SDL_Renderer* renderer, MapData* mapData);
-	void setAlpha(Uint8 a);
+	void setAlpha(Uint8 a) { alpha = a; };
+	std::string getName() const override { return "GameOverState"; }
 private:
 	Text GAME_OVER;
 	float alpha = 255.0f;
-	MapData* mapData = NULL;
+	MapData* mapData = nullptr;
 	std::vector<Button*> buttons;
 };
 

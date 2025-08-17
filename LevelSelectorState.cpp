@@ -11,7 +11,7 @@ bool LevelSelectorState::enter(Game& game, SDL_Renderer* renderer) {
 	mapDataList = mapDataLoader->getMapDataList();
 	
 	if (mapDataList.empty()) {
-		std::cerr << "No map data found in the specified folder.\n";
+		std::cerr << "[LevelSelectorState::enter] No map data found in the specified folder.\n";
 		return false;
 	}
 	for (const auto& mapData : mapDataList) {
@@ -25,13 +25,16 @@ bool LevelSelectorState::enter(Game& game, SDL_Renderer* renderer) {
 		std::cerr << "HP Drain Multiplier: " << mapData.hp_drain_multiplier << "\n";
 		std::cerr << "Rating: " << mapData.rating << "\n";*/
 	}
+
+	enableAutoplay = new Checkbox;
+	enableAutoplay->init(AUTOPLAY_CHECKBOX_X, AUTOPLAY_CHECKBOX_Y, "Enable Autoplay");
 	return true;
 }
 
 bool LevelSelectorState::exit() {
 	levelEntries.clear();
 	if (mapDataLoader) delete mapDataLoader;
-	mapDataLoader = NULL;
+	mapDataLoader = nullptr;
 	for (auto& entry : levelEntries) {
 		delete entry;
 	}
@@ -40,6 +43,8 @@ bool LevelSelectorState::exit() {
 }
 
 void LevelSelectorState::handleEvent(Game& game, SDL_Event& event) {
+	enableAutoplay->handleEvent(game, event);
+
 	if (event.type == SDL_EVENT_KEY_DOWN) {
 		if (event.key.key == SDLK_ESCAPE) {
 			game.switchState(new MenuState(), game.getRenderer());
@@ -55,7 +60,12 @@ void LevelSelectorState::handleEvent(Game& game, SDL_Event& event) {
 					//std::cerr << "Is this thing even printing(in LevelSelectorState/handleEvent)?\n";
 					//mapDataList[i].print();
 					//data is still available here
-					game.enterIngameStateWithMap(&mapDataList[i]);
+					if (enableAutoplay->isEnabled()) {
+						game.enterAutoplayStateWithMap(&mapDataList[i]);
+					}
+					else {
+						game.enterIngameStateWithMap(&mapDataList[i]);
+					}
 					return;
 				}
 			}
@@ -77,5 +87,6 @@ void LevelSelectorState::render(Game& game, SDL_Renderer* renderer) {
 		y += INDIVIDUAL_MAP_H + spacing; // next entry's y position
 	}
 
+	enableAutoplay->render(renderer);
 	SDL_RenderPresent(renderer);
 }

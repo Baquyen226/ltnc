@@ -7,6 +7,7 @@
 #include "Button.h"
 #include "game.h"
 #include "texture.h"
+#include "AudioManager.h"
 
 class LevelCompleteState : public GameState {
 public:
@@ -16,6 +17,8 @@ public:
 	void handleEvent(Game& game, SDL_Event& event) override;
 	void update(Game& game, SDL_Renderer* renderer) override;
 	void render(Game& game, SDL_Renderer* renderer) override;
+
+	std::string getName() const override { return "LevelCompleteState"; }
 private:
 	Texture background;
 	SDL_Rect backgroundRect;
@@ -30,6 +33,8 @@ private:
 	int buttonSpacing = 200;
 	//text
 	std::vector<Text*> texts;
+	//sfx
+	AudioManager* applaudSFX = nullptr;
 };
 
 #endif // !

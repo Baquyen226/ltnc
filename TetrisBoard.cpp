@@ -4,42 +4,37 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include <iostream>
-//lazy fix
-struct PreviousPieceState {
-    int id, x, y, rotation;
-
-    PreviousPieceState() {
-        id = 0;
-        x = 0;
-        y = 0;
-        rotation = 0;
-    }
-
-    void save(int _id, int _x, int _y, int _rotation) {
-        id = _id;
-        x = _x;
-        y = _y;
-        rotation = _rotation;
-    }
-};
-
-PreviousPieceState lastPieceState;
-PreviousPieceState ghostPiece;
 
 TetrisBoard::TetrisBoard() {
     queue = new TetrisQueue();
     currentPiece = new Tetromino();
+    ai = new TetrisAI(this);
     queue->generateNewBag();
     queue->previewQueueUpdate();
     currentPiece->generateNewPiece(queue, -1);
     clearBoard();
 }
 
+TetrisBoard::TetrisBoard(const TetrisBoard &other){
+	queue = new TetrisQueue(*other.queue);
+	currentPiece = new Tetromino(*other.currentPiece);
+	ai = new TetrisAI(this);
+	holdPiece = other.holdPiece;
+	isHoldUsed = other.isHoldUsed;
+	fTimer = other.fTimer;
+	pieceLockfTimer = other.pieceLockfTimer;
+	level = other.level;
+	lastMovement = other.lastMovement;
+	alpha = other.alpha;
+	// Copy the board state
+	pBoard = other.pBoard;
+}
+
 TetrisBoard::~TetrisBoard() {
     if (queue) delete queue;
-    queue = NULL;
+    queue = nullptr;
     if (currentPiece) delete currentPiece;
-    currentPiece = NULL;
+    currentPiece = nullptr;
 }
 
 
@@ -48,11 +43,11 @@ void TetrisBoard::loadAsset(SDL_Renderer* renderer) {
 }
 
 void TetrisBoard::Clean() {
-    if (queue != NULL && currentPiece != NULL) {
+    if (queue != nullptr && currentPiece != nullptr) {
         delete queue;
         delete currentPiece;
-        queue = NULL;
-        currentPiece = NULL;
+        queue = nullptr;
+        currentPiece = nullptr;
     }
 }
 
@@ -65,14 +60,20 @@ void TetrisBoard::clearBoard() {
     }
 }
 
+
 void TetrisBoard::printBoard() {
+    std::cout << "Current Tetris Board:\n";
     for (int i = 0; i < BOARD_HEIGHT; i++) {
+		std::cout << "||";
         for (int j = 0; j < BOARD_WIDTH; j++) {
-            std::cout << pBoard[i][j] << " ";
+            std::string cell = (pBoard[i][j] == 0) ? "  " : "[]";
+            std::cout << cell;
         }
-        std::cout << "\n";
+        std::cout << "||\n";
     }
-    std::cout << "\n";
+    std::cout << "Hold Piece: " << holdPiece << "\n";
+    std::cout << "Current Piece ID: " << currentPiece->pieceID << "\n";
+    std::cout << "Current Piece Position: (" << currentPiece->x << ", " << currentPiece->y << "), Rotation: " << currentPiece->rotation << "\n";
 }
 
 void TetrisBoard::getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha) {
@@ -103,12 +104,385 @@ void TetrisBoard::getRenderColor(SDL_Renderer* renderer, int piece_id, int alpha
         break;
     default:
         std::cerr << "Undefined behavior detected";
-        exit(1);
+        exit(-1);
     }
 }
 
 void TetrisBoard::Render(SDL_Renderer* renderer) {
-    //render hold piece
+	renderHoldPiece(renderer);
+	renderPlayingBoard(renderer);
+
+    //other stuff
+    queue->Render(renderer, alpha); 
+}
+
+
+void TetrisBoard::editCell(int i, int j, int val) {
+    pBoard[i][j] = val;
+}
+
+bool TetrisBoard::canMove(int newX, int newY, int newRotation) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {
+                int boardX = newX + j;
+                int boardY = newY + i;
+
+                if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
+                    //std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
+                    return false;  // Out of bounds, the move is invalid
+                }
+
+                if (boardY >= 0 && pBoard[boardY][boardX] != 0) {
+                    //std::cout << "Collision at (" << boardX << ", " << boardY << ")\n";
+                    return false;  // The spot is occupied, can't move
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool TetrisBoard::tryRotation(int newRotation, int direction) {
+    for (int i = 0; i < 5; ++i) {
+        int offsetX = 0, offsetY = 0;
+        //0(currentRotation)->1(newRotation) uses index 0 when referencing the kick table when rotating clockwise              
+        //1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
+        //therefore CW uses currenRotation, CCW uses newRotation * (-1) since i want to reverse the rotation
+
+        switch (currentPiece->pieceID) {
+        case O_PIECE:
+            offsetX = 0; offsetY = 0;
+            break;
+        case I_PIECE:
+            if (direction > 0) {
+                offsetX = I_Piece_offsetData[currentPiece->rotation][i][0];
+                offsetY = -I_Piece_offsetData[currentPiece->rotation][i][1];
+            }
+            else {
+                offsetX = -I_Piece_offsetData[newRotation][i][0];
+                offsetY = I_Piece_offsetData[newRotation][i][1];
+            }
+            break;
+        default:
+            if (direction > 0) {
+                offsetX = defaultOffsetData[currentPiece->rotation][i][0];
+                offsetY = -defaultOffsetData[currentPiece->rotation][i][1];
+            }
+            else {
+                offsetX = -defaultOffsetData[newRotation][i][0];
+                offsetY = defaultOffsetData[newRotation][i][1];
+            }
+            break;
+        }
+
+        int newX = currentPiece->x + offsetX;
+        int newY = currentPiece->y + offsetY;
+
+        if (canMove(newX, newY, newRotation)) {
+            currentPiece->x = newX;
+            currentPiece->y = newY;
+            currentPiece->rotate(direction);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
+bool TetrisBoard::movePiece(MovementType moveType) {
+    if (!currentPiece || currentPiece->isLocked) {
+        return false;
+    }
+
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+    deleteOldBlock();
+
+    bool moved = false;
+    int newX, newY, newRotate;
+
+    switch (moveType) {
+    case MOVE_LEFT:
+        newX = currentPiece->x - 1;
+        if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
+            currentPiece->moveLeft();
+            moved = true;
+			lastMovement = MOVE_LEFT;
+        }
+        break;
+    case MOVE_RIGHT:
+        newX = currentPiece->x + 1;
+        if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
+            currentPiece->moveRight();
+            moved = true;
+			lastMovement = MOVE_RIGHT;
+        }
+        break;
+    case ROTATE_CW:
+        newRotate = (currentPiece->rotation + 1) % 4;
+        moved = tryRotation(newRotate, 1);
+		if (moved) lastMovement = ROTATE_CW;
+        break;
+    case ROTATE_CCW:
+        newRotate = (currentPiece->rotation + 3) % 4;
+        moved = tryRotation(newRotate, -1);
+		if (moved) lastMovement = ROTATE_CCW;
+        break;
+    case ROTATE_180:
+        newRotate = (currentPiece->rotation + 2) % 4;
+        moved = tryRotation(newRotate, 2);
+		if (moved) lastMovement = ROTATE_180;
+        break;
+    case SOFT_DROP:
+        newY = currentPiece->y + 1;
+        if (canMove(currentPiece->x, newY, currentPiece->rotation)) {
+            currentPiece->moveDown();
+            moved = true;
+			lastMovement = SOFT_DROP;
+        }
+        break;
+    case HARD_DROP: {
+        int y = currentPiece->y;
+        while (canMove(currentPiece->x, y + 1, currentPiece->rotation)) {
+            y++;
+        }
+        currentPiece->setPosition(currentPiece->x, y);
+        putBlockInPlace();
+        currentPiece->isLocked = true;
+        moved = true;
+        break;
+    }
+    case FALSE_HARD_DROP:
+        int fy = currentPiece->y;
+        while (canMove(currentPiece->x, fy + 1, currentPiece->rotation)) {
+            fy++;
+        }
+        ghostPiece.save(currentPiece->pieceID, currentPiece->x, fy, currentPiece->rotation);
+        break;
+    }
+
+    putBlockInPlace();
+    /*if (moved && moveType == HARD_DROP) {
+        printBoard();
+        ai->evaluateBoardState(1);
+    }*/
+    return moved;
+}
+
+void TetrisBoard::deleteOldBlock() {
+    int size = currentPiece->getPieceSize();
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int id = lastPieceState.id;
+            int boardX = lastPieceState.x + j;
+            int boardY = lastPieceState.y + i;
+            int rotation = lastPieceState.rotation;
+
+            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
+                continue; // Skip invalid positions
+            }
+
+            if (Piece_Shape[id][rotation][i][j] != 0) {
+                pBoard[boardY][boardX] = 0;
+            }
+        }
+    }
+}
+
+void TetrisBoard::putBlockInPlace() {
+    if (!currentPiece) {
+        std::cerr << "Error: currentPiece is nullptr!" << "\n";
+        return;
+    }
+
+    int size = currentPiece->getPieceSize();
+
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int id = currentPiece->pieceID;
+            int boardX = currentPiece->x + j;
+            int boardY = currentPiece->y + i;
+
+            if (Piece_Shape[id][currentPiece->rotation][i][j] != 0) {
+                pBoard[boardY][boardX] = Piece_Shape[id][currentPiece->rotation][i][j];
+            }
+        }
+    }
+}
+
+int TetrisBoard::checkForLineClear(TSpinType type, SDL_Renderer* renderer, Game &game, bool shouldUpdateStats) {
+    int lineCleared = 0;
+
+    for (int i = 2; i < BOARD_HEIGHT; i++) {
+        bool isFullLine = true;
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            if (pBoard[i][j] == 0) {
+                isFullLine = false;
+                break;
+            }
+        }
+
+        if (isFullLine) {
+            //std::cout << "Line clear detected at line#" << i << "\n";
+            lineCleared++;
+
+            // shift all rows above down
+            for (int k = i; k > 0; k--) {
+                for (int j = 0; j < BOARD_WIDTH; j++) {
+                    pBoard[k][j] = pBoard[k - 1][j];
+                }
+            }
+
+            // clear the top row (since everything shifts down)
+            for (int j = 0; j < BOARD_WIDTH; j++) {
+                pBoard[0][j] = 0;
+            }
+        }
+    }
+    if (shouldUpdateStats && (lineCleared >= 1 || type != NONE)) {
+        game.getStats()->Update(lineCleared, type, renderer);
+        /*std::cout << "Line cleared: " << game.getStats()->totalLineCleared << "\n";
+        std::cout << "Points: " << game.getStats()->points << "\n";
+        std::cout << "frames/falldown: " << game.getStats()->gravity << "\n\n";*/
+    }
+    return lineCleared;
+}
+
+void TetrisBoard::GameOver() {
+    std::cout << "Game over\n";
+    state = GAMEOVER;
+    GameOverTimestamp = SDL_GetTicks();
+}
+
+void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game, bool isPlayer) {
+    if (state != NORMAL) return;
+
+	bool isOnGround = !canMove(currentPiece->x, currentPiece->y + 1, currentPiece->rotation);
+	if (isOnGround) { pieceLockfTimer++; }
+	else { pieceLockfTimer = 0; }
+
+    // Handle locked pieces
+    if (currentPiece->isLocked) {
+        isHoldUsed = false;
+		TSpinType tSpinType = isTspin();
+		int clears = checkForLineClear(tSpinType, renderer, game, isPlayer);
+        currentPiece->generateNewPiece(queue, -1);
+        if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) {
+            currentPiece->isLocked = true;
+            GameOver();
+        }
+    }
+    else {
+        if (fTimer >= game.getStats()->gravity) {
+            fTimer = 0;
+            if (!movePiece(SOFT_DROP) && pieceLockfTimer >= MAX_PIECE_LOCK_FRAMES) currentPiece->isLocked = true;
+        }
+        else {
+            fTimer++;
+        }
+    }
+    movePiece(FALSE_HARD_DROP);
+}
+
+
+void TetrisBoard::Reset(Game& game) {
+    clearBoard();
+    holdPiece = -1;
+    queue->Reset();
+    game.getStats()->Reset();
+    currentPiece->generateNewPiece(queue, -1);
+
+    std::cerr << "Game restarted!\n";
+    state = NORMAL;
+}
+
+
+//i literally cannot remove this without something going wrong
+void TetrisBoard::moveRight() {
+    movePiece(MOVE_RIGHT);
+}
+
+void TetrisBoard::moveLeft() {
+    movePiece(MOVE_LEFT);
+}
+
+void TetrisBoard::Rotate() {
+    movePiece(ROTATE_CW);
+}
+
+void TetrisBoard::ReversedRotate() {
+    movePiece(ROTATE_CCW);
+}
+
+void TetrisBoard::Rotate180() {
+    movePiece(ROTATE_180);
+}
+
+void TetrisBoard::HardDrop() {
+    movePiece(HARD_DROP);
+}
+
+void TetrisBoard::SoftDrop() {
+    movePiece(SOFT_DROP);
+}
+
+void TetrisBoard::HoldPiece() {
+    if (isHoldUsed) return;
+
+    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
+    deleteOldBlock();
+    if (holdPiece == -1) {
+        holdPiece = currentPiece->pieceID;
+        currentPiece->generateNewPiece(queue, -1);
+    }
+    else {
+        int temp = holdPiece;
+        holdPiece = currentPiece->pieceID;
+        currentPiece->generateNewPiece(queue, temp);
+    }
+    isHoldUsed = true;
+}
+
+void TetrisBoard::setAlpha(Uint8 v) {
+    alpha = v;
+}
+
+//waht
+TSpinType TetrisBoard::isTspin() {
+	if (currentPiece->pieceID != T_PIECE) return NONE;
+	int x = currentPiece->x;
+	int y = currentPiece->y;
+	int rotation = currentPiece->rotation;
+
+	//Check if both of the front corners are occupied
+	short corner1X = x + frontCorner[rotation][0][0];
+	short corner1Y = y + frontCorner[rotation][0][1];
+	short corner2X = x + frontCorner[rotation][1][0];
+	short corner2Y = y + frontCorner[rotation][1][1];
+	short frontCornerOccupied = isCellOccupied(corner1X, corner1Y) + isCellOccupied(corner2X, corner2Y);    //isCellOccupied(firstcorner) && isCellOccupied(secondcorner);
+
+	//Either one of the back corners is occupied
+    short backCorner1X = x + frontCorner[(rotation + 2) % 4][0][0];
+	short backCorner1Y = y + frontCorner[(rotation + 2) % 4][0][1];
+	short backCorner2X = x + frontCorner[(rotation + 2) % 4][1][0];
+	short backCorner2Y = y + frontCorner[(rotation + 2) % 4][1][1];
+    short backCornerOccupied = isCellOccupied(backCorner1X, backCorner1Y) + isCellOccupied(backCorner2X, backCorner2Y);
+
+	bool lastMoveWasRotation = (lastMovement == ROTATE_CW || lastMovement == ROTATE_CCW || lastMovement == ROTATE_180);
+	if (lastMoveWasRotation && frontCornerOccupied == 2 && backCornerOccupied >= 1) return T_SPIN;
+	if (lastMoveWasRotation && frontCornerOccupied == 1 && backCornerOccupied >= 1) return T_SPIN_MINI; 
+	return NONE; //not a T-spin
+}
+
+bool TetrisBoard::isCellOccupied(int x, int y) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return true;
+    return pBoard[y][x] != 0;
+}
+
+void TetrisBoard::renderHoldPiece(SDL_Renderer* renderer) {
     PieceType holdPieceID = (PieceType)holdPiece;
     SDL_FRect holdPieceContainer = { HOLD_PIECE_OFFSET_X, HOLD_PIECE_OFFSET_Y, CELL_SIZE * 5, CELL_SIZE * 4 };
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, alpha);
@@ -116,6 +490,7 @@ void TetrisBoard::Render(SDL_Renderer* renderer) {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
     SDL_RenderFillRect(renderer, &holdPieceContainer);
+    if (holdPiece == -1) return;
 
     int size = (holdPieceID == I_PIECE) ? 4 : 3;
 
@@ -127,8 +502,15 @@ void TetrisBoard::Render(SDL_Renderer* renderer) {
                 //Pieces (except I piece) that has the first column occupied
                 bool firstColumnOccupied = !(holdPieceID == I_PIECE || holdPieceID == O_PIECE);
 
-                int cellSize_posX = HOLD_PIECE_OFFSET_X + firstColumnOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * j + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
-                    cellSize_posY = HOLD_PIECE_OFFSET_Y + firstRowOccupied * CELL_SIZE + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE + CELL_SIZE * i;
+                int cellSize_posX = HOLD_PIECE_OFFSET_X
+                    + firstColumnOccupied * CELL_SIZE
+                    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE
+                    + CELL_SIZE * j
+                    + ((holdPieceID == O_PIECE) ? 0.5 : 0) * CELL_SIZE,
+                    cellSize_posY = HOLD_PIECE_OFFSET_Y
+                    + firstRowOccupied * CELL_SIZE
+                    + ((holdPieceID == I_PIECE) ? 0.5 : 0) * CELL_SIZE
+                    + CELL_SIZE * i;
 
                 SDL_FRect cell = { cellSize_posX, cellSize_posY, CELL_SIZE, CELL_SIZE };
 
@@ -140,8 +522,9 @@ void TetrisBoard::Render(SDL_Renderer* renderer) {
             }
         }
     }
-    SDL_FRect holdPieceCell = { HOLD_PIECE_OFFSET_X + CELL_SIZE, HOLD_PIECE_OFFSET_Y + CELL_SIZE, CELL_SIZE, CELL_SIZE };
+}
 
+void TetrisBoard::renderPlayingBoard(SDL_Renderer* renderer) {
     //render the last 2 lines without the board grid(otherwise the piece would just look weird)
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -216,327 +599,4 @@ void TetrisBoard::Render(SDL_Renderer* renderer) {
         }
     }
 
-    //other stuff
-    queue->Render(renderer, alpha); 
-}
-
-
-void TetrisBoard::editCell(int i, int j, int val) {
-    pBoard[i][j] = val;
-}
-
-bool TetrisBoard::canMove(int newX, int newY, int newRotation) {
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (Piece_Shape[currentPiece->pieceID][newRotation][i][j] != 0) {
-                int boardX = newX + j;
-                int boardY = newY + i;
-
-                if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
-                    //std::cout << "Out of bounds at (" << boardX << ", " << boardY << ")\n";
-                    return false;  // Out of bounds, the move is invalid
-                }
-
-                if (boardY >= 0 && pBoard[boardY][boardX] != 0) {
-                    //std::cout << "Collision at (" << boardX << ", " << boardY << ")\n";
-                    return false;  // The spot is occupied, can't move
-                }
-            }
-        }
-    }
-    return true;
-}
-
-bool TetrisBoard::tryRotation(int newRotation, int direction) {
-    for (int i = 0; i < 5; ++i) {
-        int offsetX = 0, offsetY = 0;
-        //0(currentRotation)->1(newRotation) uses index 0 when referencing the kick table when rotating clockwise              
-        //1(currentRotation)->0(newRotation) also uses index 0 when referencing the kick table when rotating counter-clockwise
-        //therefore CW uses currenRotation, CCW uses newRotation, except its multiplied by -1(direction)
-
-        switch (currentPiece->pieceID) {
-        case O_PIECE:
-            offsetX = 0; offsetY = 0;
-            break;
-        case I_PIECE:
-            if (direction > 0) {
-                offsetX = I_Piece_offsetData[currentPiece->rotation][i][0];
-                offsetY = -I_Piece_offsetData[currentPiece->rotation][i][1];
-            }
-            else {
-                offsetX = -I_Piece_offsetData[newRotation][i][0];
-                offsetY = I_Piece_offsetData[newRotation][i][1];
-            }
-            break;
-        default:
-            if (direction > 0) {
-                offsetX = defaultOffsetData[currentPiece->rotation][i][0];
-                offsetY = -defaultOffsetData[currentPiece->rotation][i][1];
-            }
-            else {
-                offsetX = -defaultOffsetData[newRotation][i][0];
-                offsetY = defaultOffsetData[newRotation][i][1];
-            }
-            break;
-        }
-
-        int newX = currentPiece->x + offsetX;
-        int newY = currentPiece->y + offsetY;
-
-        if (canMove(newX, newY, newRotation)) {
-            currentPiece->x = newX;
-            currentPiece->y = newY;
-            currentPiece->rotate(direction);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-
-bool TetrisBoard::movePiece(MovementType moveType) {
-    if (!currentPiece || currentPiece->isLocked) {
-        return false;
-    }
-
-    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
-    deleteOldBlock();
-
-    bool moved = false;
-    int newX, newY, newRotate;
-
-    switch (moveType) {
-    case MOVE_LEFT:
-        newX = currentPiece->x - 1;
-        if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
-            currentPiece->moveLeft();
-            moved = true;
-        }
-        break;
-    case MOVE_RIGHT:
-        newX = currentPiece->x + 1;
-        if (canMove(newX, currentPiece->y, currentPiece->rotation)) {
-            currentPiece->moveRight();
-            moved = true;
-        }
-        break;
-    case ROTATE_CW:
-        newRotate = (currentPiece->rotation + 1) % 4;
-        moved = tryRotation(newRotate, 1);
-        break;
-    case ROTATE_CCW:
-        newRotate = (currentPiece->rotation + 3) % 4;
-        moved = tryRotation(newRotate, -1);
-        break;
-    case ROTATE_180:
-        newRotate = (currentPiece->rotation + 2) % 4;
-        moved = tryRotation(newRotate, 1);
-        break;
-    case SOFT_DROP:
-        newY = currentPiece->y + 1;
-        if (canMove(currentPiece->x, newY, currentPiece->rotation)) {
-            currentPiece->moveDown();
-            moved = true;
-        }
-        break;
-    case HARD_DROP: {
-        int y = currentPiece->y;
-        while (canMove(currentPiece->x, y + 1, currentPiece->rotation)) {
-            y++;
-        }
-        currentPiece->setPosition(currentPiece->x, y);
-        putBlockInPlace();
-        currentPiece->isLocked = true;
-        moved = true;
-        break;
-    }
-    case FALSE_HARD_DROP:
-        int fy = currentPiece->y;
-        while (canMove(currentPiece->x, fy + 1, currentPiece->rotation)) {
-            fy++;
-        }
-        ghostPiece.save(currentPiece->pieceID, currentPiece->x, fy, currentPiece->rotation);
-        break;
-    }
-
-
-    putBlockInPlace();
-    return moved;
-}
-
-void TetrisBoard::deleteOldBlock() {
-    int size = currentPiece->getPieceSize();
-
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            int id = lastPieceState.id;
-            int boardX = lastPieceState.x + j;
-            int boardY = lastPieceState.y + i;
-            int rotation = lastPieceState.rotation;
-
-            if (boardX < 0 || boardX >= BOARD_WIDTH || boardY < 0 || boardY >= BOARD_HEIGHT) {
-                continue; // Skip invalid positions
-            }
-
-            if (Piece_Shape[id][rotation][i][j] != 0) {
-                pBoard[boardY][boardX] = 0;
-            }
-        }
-    }
-}
-
-void TetrisBoard::putBlockInPlace() {
-    if (!currentPiece) {
-        std::cerr << "Error: currentPiece is nullptr!" << "\n";
-        return;
-    }
-
-    int size = currentPiece->getPieceSize();
-
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            int id = currentPiece->pieceID;
-            int boardX = currentPiece->x + j;
-            int boardY = currentPiece->y + i;
-
-            if (Piece_Shape[id][currentPiece->rotation][i][j] != 0) {
-                pBoard[boardY][boardX] = Piece_Shape[id][currentPiece->rotation][i][j];
-            }
-        }
-    }
-}
-
-int TetrisBoard::checkForLineClear(SDL_Renderer* renderer, Game &game) {
-    int lineCleared = 0;
-
-    for (int i = 2; i < BOARD_HEIGHT; i++) {
-        bool isFullLine = true;
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-            if (pBoard[i][j] == 0) {
-                isFullLine = false;
-                break;
-            }
-        }
-
-        if (isFullLine) {
-            //std::cout << "Line clear detected at line#" << i << "\n";
-            lineCleared++;
-
-            // shift all rows above down
-            for (int k = i; k > 0; k--) {
-                for (int j = 0; j < BOARD_WIDTH; j++) {
-                    pBoard[k][j] = pBoard[k - 1][j];
-                }
-            }
-
-            // clear the top row (since everything shifts down)
-            for (int j = 0; j < BOARD_WIDTH; j++) {
-                pBoard[0][j] = 0;
-            }
-        }
-    }
-    if (lineCleared >= 1) {
-        game.getStats()->Update(lineCleared, renderer);
-        std::cout << "Line cleared: " << game.getStats()->totalLineCleared << "\n";
-        std::cout << "Points: " << game.getStats()->points << "\n";
-        std::cout << "frames/falldown: " << game.getStats()->gravity << "\n\n";
-    }
-    return lineCleared;
-}
-
-void TetrisBoard::GameOver() {
-    std::cout << "Game over\n";
-    state = GAMEOVER;
-    GameOverTimestamp = SDL_GetTicks();
-}
-
-void TetrisBoard::boardUpdate(SDL_Renderer* renderer, Game& game) {
-    if (state != NORMAL) return;
-
-    // Handle locked pieces
-    if (currentPiece->isLocked) {
-        isHoldUsed = false;
-        int clears = checkForLineClear(renderer, game);
-        currentPiece->generateNewPiece(queue, -1);
-        if (!canMove(currentPiece->x, currentPiece->y, INITIAL_ROTATION_STATE)) {
-            GameOver();
-            return;
-        }
-    }
-    else {
-        if (fTimer >= game.getStats()->gravity) {
-            fTimer = 0;
-            if (!movePiece(SOFT_DROP)) {
-                currentPiece->isLocked = true;
-            }
-        }
-        else {
-            fTimer++;
-        }
-    }
-    movePiece(FALSE_HARD_DROP);
-}
-
-void TetrisBoard::Reset(Game& game) {
-    clearBoard();
-    holdPiece = -1;
-    queue->Reset();
-    game.getStats()->Reset();
-    currentPiece->generateNewPiece(queue, -1);
-
-    std::cerr << "Game restarted!\n";
-    state = NORMAL;
-}
-
-
-//i literally cannot remove this without something going wrong
-void TetrisBoard::moveRight() {
-    movePiece(MOVE_RIGHT);
-}
-
-void TetrisBoard::moveLeft() {
-    movePiece(MOVE_LEFT);
-}
-
-void TetrisBoard::Rotate() {
-    movePiece(ROTATE_CW);
-}
-
-void TetrisBoard::ReversedRotate() {
-    movePiece(ROTATE_CCW);
-}
-
-void TetrisBoard::Rotate180() {
-    movePiece(ROTATE_180);
-}
-
-void TetrisBoard::HardDrop() {
-    movePiece(HARD_DROP);
-}
-
-void TetrisBoard::SoftDrop() {
-    movePiece(SOFT_DROP);
-}
-
-void TetrisBoard::HoldPiece() {
-    if (isHoldUsed) return;
-
-    lastPieceState.save(currentPiece->pieceID, currentPiece->x, currentPiece->y, currentPiece->rotation);
-    deleteOldBlock();
-    if (holdPiece == -1) {
-        holdPiece = currentPiece->pieceID;
-        currentPiece->generateNewPiece(queue, -1);
-    }
-    else {
-        int temp = holdPiece;
-        holdPiece = currentPiece->pieceID;
-        currentPiece->generateNewPiece(queue, temp);
-    }
-    isHoldUsed = true;
-}
-
-void TetrisBoard::setAlpha(Uint8 v) {
-    alpha = v;
 }

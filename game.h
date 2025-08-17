@@ -20,18 +20,19 @@ public:
 	void handleEvent();
 	void update();
 	void render();
-	bool running() { return isRunning; };
+	const bool running() { return isRunning; };
 
 	void switchState(GameState* newState, SDL_Renderer* renderer);
 	void enterIngameStateWithMap(MapData* mapData);
-	IngameStats* getStats() { return stats; };
+	void enterAutoplayStateWithMap(MapData* m);
+	IngameStats* getStats();
 	SDL_Renderer* getRenderer() { return renderer; };
 	void Exit() { isRunning = false; };
 private:
 	bool isRunning = false;
-	SDL_Renderer* renderer = NULL;
-	SDL_Window* window = NULL;
-	GameState* currentState = NULL;
-	IngameStats* stats = NULL;
+	SDL_Renderer* renderer = nullptr;
+	SDL_Window* window = nullptr;
+	GameState* currentState = nullptr;
+	IngameStats* stats = nullptr;
 };
 #endif

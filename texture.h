@@ -11,6 +11,7 @@ class Texture {
 public:
 	Texture();
 	~Texture();
+	Texture(SDL_Renderer* renderer, std::string& path) { loadFromFile(renderer, path); };
 
 	void loadFromFile(SDL_Renderer* renderer, std::string& filepath);
 	void setAlpha(float a);
@@ -31,9 +32,10 @@ public:
 	void getSize(int* x, int* y);
 	void Render(SDL_Renderer* renderer, int x, int y);
 	SDL_Texture* getTexture() { return texture; };
+	std::string getText() { return text; };
 private:
 	SDL_Texture* texture;
-	SDL_Color textColor;
+	SDL_Color textColor = {255, 255, 255, 255};
 	TTF_Font* font;
 	std::string text;
 };

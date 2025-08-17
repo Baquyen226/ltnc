@@ -2,6 +2,7 @@
 #include "game.h"
 
 bool TetrisChallenge::enter(Game& game, SDL_Renderer* renderer) {
+	game.getStats()->loadAssets(renderer);
 	board = new TetrisBoard;
 	board->clearBoard();
 	return true;
@@ -9,7 +10,7 @@ bool TetrisChallenge::enter(Game& game, SDL_Renderer* renderer) {
 
 bool TetrisChallenge::exit() {
 	delete board;
-	board = NULL;
+	board = nullptr;
 	return true;
 }
 
@@ -74,19 +75,38 @@ void TetrisChallenge::update(Game& game, SDL_Renderer* renderer) {
 	game.getStats()->setAlpha(alpha);
 
 	Uint64 now = SDL_GetTicks();
-	if (isRightHeld) {
-		if (now - rightPressed > DELAYED_AUTO_SHIFT) {
-			int p = (now - rightPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
-			if (p == 0) board->moveRight();
+	// PLEASE BE CONSISTENT OVER USING FRAME TIMERS AND DELTATIME :SOB:
+	switch (REPEAT_RATE) {
+	case 0:
+		if (isRightHeld) {
+			if (now - rightPressed > DELAYED_AUTO_SHIFT) {
+				while (board->movePiece(MOVE_RIGHT)) {}
+			}
 		}
-	}
 
-	if (isLeftHeld) {
-		if (now - leftPressed > DELAYED_AUTO_SHIFT) {
-			int p = (now - leftPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
-			if (p == 0) board->moveLeft();
+		if (isLeftHeld) {
+			if (now - leftPressed > DELAYED_AUTO_SHIFT) {
+				while (board->movePiece(MOVE_LEFT)) {}
+			}
 		}
+		break;
+	default:
+		if (isRightHeld) {
+			if (now - rightPressed > DELAYED_AUTO_SHIFT) {
+				int p = (now - rightPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
+				if (p == 0) board->moveRight();
+			}
+		}
+
+		if (isLeftHeld) {
+			if (now - leftPressed > DELAYED_AUTO_SHIFT) {
+				int p = (now - leftPressed - DELAYED_AUTO_SHIFT) % REPEAT_RATE;
+				if (p == 0) board->moveLeft();
+			}
+		}
+		break;
 	}
+	
 
 	if (isDownHeld) {
 		board->SoftDrop();
@@ -99,7 +119,7 @@ void TetrisChallenge::render(Game& game, SDL_Renderer* renderer) {
 }
 
 void TetrisChallenge::setAlpha(Uint8 a) {
-	if (board == NULL) return;
+	if (board == nullptr) return;
 	board->setAlpha(a);
 	alpha = a;
 }

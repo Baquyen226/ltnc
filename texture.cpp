@@ -3,7 +3,7 @@
 
 //texture class
 Texture::Texture() {
-	texture = NULL;
+	texture = nullptr;
 };
 
 Texture::~Texture() {
@@ -49,17 +49,17 @@ void Texture::PartialRender(SDL_Renderer* renderer, SDL_FRect* src, SDL_FRect* d
 
 //text class
 Text::Text() {
-	textColor = {};
-	font = NULL;
-	texture = NULL;
+	textColor = {255, 255, 255, 255};
+	font = nullptr;
+	texture = nullptr;
 	text = "";
 }
 
 Text::~Text() {
 	TTF_CloseFont(font);
-	font = NULL;
+	font = nullptr;
 	SDL_DestroyTexture(texture);
-	texture = NULL;
+	texture = nullptr;
 }
 
 void Text::loadFont(std::string path, int size) {
@@ -74,8 +74,10 @@ void Text::loadTextToTexture(std::string text, SDL_Color color, SDL_Renderer* re
 	SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.length(), textColor);
 	if (!surface) std::cerr << "An error occured why trying to load text to surface: " << SDL_GetError() << "\n";
 
+	if (texture) SDL_DestroyTexture(texture); // Destroy old texture if it exists
 	texture = SDL_CreateTextureFromSurface(renderer, surface);
 	if (!texture) std::cerr << "An error occured why trying to load surface to texture " << SDL_GetError() << "\n";
+	this->text = text;
 
 	SDL_DestroySurface(surface);
 }
@@ -101,5 +103,6 @@ void Text::Render(SDL_Renderer* renderer, int x, int y) {
 	int w = texture->w;
 	int h = texture->h;
 	SDL_FRect rect = { x, y, w, h };
+	//std::cerr << "Rendering text " << text << " at(" << x << ", " << y << ") with size(" << w << ", " << h << ")\n";
 	SDL_RenderTexture(renderer, texture, 0, &rect);
 }

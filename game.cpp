@@ -34,13 +34,13 @@ Game::Game() {
 
 Game::~Game() {
 	SDL_DestroyRenderer(renderer);
-	renderer = NULL;
+	renderer = nullptr;
 	SDL_DestroyWindow(window);
-	window = NULL;
+	window = nullptr;
 	if (currentState) delete currentState;
-	currentState = NULL;
+	currentState = nullptr;
 	if (stats) delete stats;
-	stats = NULL;
+	stats = nullptr;
 	Mix_CloseAudio();
 	TTF_Quit();
 	SDL_Quit();
@@ -94,4 +94,22 @@ void Game::enterIngameStateWithMap(MapData* mapData) {
 		std::cerr << "Cannot switch game state\n";
 		exit(-1);
 	}
+	std::cerr << "Ingame state entered with map: " << mapData->mapName << "\n";
+}
+
+//wow such amazing code!111!!
+void Game::enterAutoplayStateWithMap(MapData* mapData) {
+	AutoplayState* s = new AutoplayState;
+	currentState = s;
+
+	if (!s->enter(*this, renderer, mapData)) {
+		std::cerr << "Cannot switch game state\n";
+		exit(-1);
+	}
+	std::cerr << "Autoplay state entered with map: " << mapData->mapName << "\n";
+}
+
+IngameStats* Game::getStats() {
+	if (!stats) stats = new IngameStats();
+	return stats;
 }

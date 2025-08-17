@@ -21,6 +21,10 @@ public:
 	Uint64 getGameOverTimestamp() { return board->GameOverTimestamp; };
 	void setAlpha(Uint8 v);
 	void setState(CurrentIngameState s) { board->state = s; };
+
+	//getters
+	TetrisBoard* getBoard() { return board; }
+	std::string getName() const override { return "TetrisChallenge"; }
 private:
 	Uint64 leftPressed;
 	Uint64 rightPressed;
@@ -31,9 +35,9 @@ private:
 	bool isDownHeld = false;
 	float alpha = 255.0f;
 
-	TetrisBoard* board = NULL;
+	TetrisBoard* board = nullptr;
 	int DELAYED_AUTO_SHIFT = 90;
-	int REPEAT_RATE = 1;
+	int REPEAT_RATE = 0;
 };
 
 #endif

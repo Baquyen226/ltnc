@@ -15,34 +15,40 @@
 int judge(Uint64 offset) {
     double absOffset = (double)offset;
     if (absOffset < 90) {
-        std::cerr << "PERFECT\n";
+        //std::cerr << "PERFECT\n";
         return 0;
     }
     else if (absOffset < 200) {
-        std::cerr << "OK\n";
+        //std::cerr << "OK\n";
         return 1;
     }
     else {
-        std::cerr << "YOU SUCK\n";
+        //std::cerr << "YOU SUCK\n";
         return 2;
     }
 }
 
 void UpdateHealthBar(float* currentHealth, float* targetHealth, float deltaHealth) {
-    if (*targetHealth > 100) {
-        *targetHealth = 100;
+	float tHealth = *targetHealth;
+	float cHealth = *currentHealth;
+
+    if (tHealth > 100) {
+        tHealth = 100;
     }
 
-    if (*targetHealth < 0) *targetHealth = 0;
+    if (tHealth < 0) tHealth = 0;
 
-    if (*currentHealth > *targetHealth) {
-        *currentHealth -= deltaHealth * (*currentHealth - *targetHealth);
-        if (*currentHealth < *targetHealth) *currentHealth = *targetHealth;
+    if (cHealth > tHealth) {
+        cHealth -= deltaHealth * (cHealth - tHealth);
+        if (cHealth < tHealth) cHealth = tHealth;
     }
-    else if (*currentHealth < *targetHealth) {
-        *currentHealth += deltaHealth * (*targetHealth - *currentHealth);
-        if (*currentHealth > *targetHealth) *currentHealth = *targetHealth;
+    else if (cHealth < tHealth) {
+        cHealth += deltaHealth * (tHealth - cHealth);
+        if (cHealth > tHealth) cHealth = tHealth;
     }
+
+	*targetHealth = tHealth;
+	*currentHealth = cHealth;
 }
 
 std::string RoundToTwoDecimalPlaces(float a) {
@@ -80,12 +86,12 @@ void RhythmChallenge::showJudgement(Game& game, int t) {
         JUDGEMENT_GOOD.loadTextToTexture("Good x" + std::to_string(ingameStats->combo), {255, 255, 255, 255}, game.getRenderer());
 		std::string s = RoundToTwoDecimalPlaces(ingameStats->accuracy);
 		ACCURACY.loadTextToTexture(s + "%", { 255, 255, 255, 255 }, game.getRenderer());
-		ingameStats->Update(-1, game.getRenderer());  // Update the stats display
+		ingameStats->Update(-1, NONE, game.getRenderer());  // Update the stats display
     }
 }
 
 bool RhythmChallenge::enter(Game& game, SDL_Renderer* renderer) {
-    std::cout << "Entering Ingame State\n";
+    std::cout << "Entering Ingame State with NO MAP DATA(something went wrong)\n";
     //sfx
     harddrop = new AudioManager();
     std::string test = "vine-boom.mp3";
@@ -189,11 +195,37 @@ bool RhythmChallenge::enter(Game& game, SDL_Renderer* renderer, MapData* mapData
 bool RhythmChallenge::exit() {
     std::cout << "Exiting Ingame State\n";
     if (harddrop) delete harddrop;
-    harddrop = NULL;
+    harddrop = nullptr;
 
     if (song) delete song;
-    song = NULL;
+    song = nullptr;
     return true;
+}
+
+void RhythmChallenge::triggerNearestNote(Game& game) {
+    harddrop->playSound(4);
+    Uint64 currentTimestamp = SDL_GetTicks() - gameStart;
+
+    // Find the closest note to hit
+    Note* closestNote = nullptr;
+    Uint64 closestDelta = UINT32_MAX;
+
+    for (auto& note : notes) {
+        if (note.hit || note.missed) continue;
+
+        Uint64 delta = SDL_abs(note.timestamp - currentTimestamp);
+        if (delta <= HIT_WINDOW && delta < closestDelta) {
+            closestDelta = delta;
+            closestNote = &note;
+        }
+    }
+
+    // Process the hit for the closest note
+    if (closestNote) {
+        showJudgement(game, judge(closestDelta));
+        closestNote->hit = true;
+        closestNote->fadeStartTime = SDL_GetTicks();
+    }
 }
 
 void RhythmChallenge::handleEvent(Game& game, SDL_Event& event) {
@@ -202,30 +234,7 @@ void RhythmChallenge::handleEvent(Game& game, SDL_Event& event) {
     switch (event.type) {
     case SDL_EVENT_KEY_DOWN:
         if (event.key.key == SDLK_SPACE && !event.key.repeat) {
-            harddrop->playSound(4);
-            Uint64 currentTimestamp = SDL_GetTicks() - gameStart;
-
-            // Find the closest note to hit
-            Note* closestNote = NULL;
-            Uint64 closestDelta = UINT32_MAX;
-
-            for (auto& note : notes) {
-                if (note.hit || note.missed) continue;
-
-                Uint64 delta = SDL_abs(note.timestamp - currentTimestamp);
-                if (delta <= HIT_WINDOW && delta < closestDelta) {
-                    closestDelta = delta;
-                    closestNote = &note;
-                }
-            }
-
-            // Process the hit for the closest note
-            if (closestNote) {
-                showJudgement(game, judge(closestDelta));
-                closestNote->hit = true;
-                closestNote->fadeStartTime = SDL_GetTicks();
-            }
-
+			triggerNearestNote(game);
             break;
         }
     }

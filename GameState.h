@@ -2,6 +2,7 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 #include <SDL.h>
+#include <string>
 class Game;
 
 class GameState {
@@ -13,6 +14,7 @@ public:
 	virtual void update(Game& game, SDL_Renderer* renderer) = 0;
 	virtual void render(Game& game, SDL_Renderer* renderer) = 0;
 
+	virtual std::string getName() const = 0;
 	virtual ~GameState() = default;
 };
 

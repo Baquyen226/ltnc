@@ -17,6 +17,8 @@ public:
 	void handleEvent(Game& game, SDL_Event& event) override;
 	void update(Game& game, SDL_Renderer* renderer) override;
 	void render(Game& game, SDL_Renderer* renderer) override;
+	void setAlpha(Uint8 a) { alpha = a; }
+	std::string getName() const override { return "MenuState"; }
 private:
 	std::vector<Button*> buttons;
 	SDL_Color buttonColor = { 255, 255, 255, 255 };

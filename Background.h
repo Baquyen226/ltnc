@@ -15,7 +15,7 @@ public:
 	void setAlpha(Uint8 a) { alpha = a; texture->setAlpha(a); }
 	void render(SDL_Renderer* renderer);
 private:
-	Texture* texture = NULL;
+	Texture* texture = nullptr;
 	SDL_FRect backgroundRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	Uint8 alpha = 255;
 };

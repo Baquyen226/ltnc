@@ -12,6 +12,8 @@ void MapData::print() {
 	std::cerr << "Map Name: " << mapName << "\n";
 	std::cerr << "Artist: " << artist << "\n";
 	std::cerr << "Audio File Path: " << audioFilePath << "\n";
+	std::cerr << "Thumbnail File Path: " << thumbnailFilePath << "\n";
+	std::cerr << "Video File Path: " << videoFilePath << "\n";
 	std::cerr << "Background File Path: " << backgroundFilePath << "\n";
 	std::cerr << "Duration: " << duration << "\n";
 	std::cerr << "HP Drain Multiplier: " << hp_drain_multiplier << "\n";
@@ -65,6 +67,7 @@ bool MapDataLoader::loadMapData() {
 						else if (key == "audio ") mapData.audioFilePath = trimSpaceLeft(value);
 						else if (key == "background ") mapData.backgroundFilePath = trimSpaceLeft(value);
 						else if (key == "thumbnail ") mapData.thumbnailFilePath = trimSpaceLeft(value);
+						else if (key == "video ") mapData.videoFilePath = trimSpaceLeft(value);
 						else if (key == "duration ") mapData.duration = std::stoi(value);
 					}
 				}

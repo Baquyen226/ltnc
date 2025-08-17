@@ -14,7 +14,7 @@ struct JudgementFeedback {
 	Uint64 startTime;
 	bool active;
 
-	JudgementFeedback() : textObject(NULL), startTime(0), active(false) {}
+	JudgementFeedback() : textObject(nullptr), startTime(0), active(false) {}
 };
 
 
@@ -31,15 +31,23 @@ public:
 	//unique function
 	bool enter(Game& game, SDL_Renderer* renderer, MapData* mapData);
 	void showJudgement(Game& game, int t);
+	void triggerNearestNote(Game& game);
 	void GameOver();
 	void setAlpha(Uint8 a);
 	void setState(CurrentIngameState state) { ThisIngameState = state; }
+	void triggerNote() { noteTriggered = true; }
 
 	CurrentIngameState ThisIngameState = NORMAL;
 	Uint64 GameOverTimestamp = 0;
+	std::string getName() const override { return "RhythmChallenge"; }
+	std::vector<Note>& getNotes() { return notes; }
+	Uint64 getGameStart() const { return gameStart; }
 private:
 	float alpha = 255.0f;
 	std::vector<Note> notes = {};
+	int noteIndex = 0;
+
+	bool noteTriggered = false;
 
 	//this game stat
 	Uint64 gameStart = 0;
@@ -50,8 +58,8 @@ private:
 	float HPDrainMultiplier = 1.0f;
 
 	//asset
-	AudioManager* harddrop = NULL;
-	AudioManager* song = NULL;
+	AudioManager* harddrop = nullptr;
+	AudioManager* song = nullptr;
 	JudgementFeedback object;
 	Text HP;
 	Text ACCURACY;
